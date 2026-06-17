@@ -343,16 +343,6 @@
             display: none;
         }
 
-        /* Radio buttons de materia: resaltar el seleccionado */
-        #materiaRadios label:has(input:checked) {
-            background: #2563eb !important;
-            color: white !important;
-            border-color: #2563eb !important;
-        }
-        #materiaRadios label:has(input:checked) input {
-            accent-color: white;
-        }
-
         /* Encabezados de competencia específica (clicables con tooltip) */
         .competencia-header {
             cursor: help;
@@ -748,40 +738,20 @@
         </div>
         <div id="tabCalculo" class="tab-content">
             <h2>📈 Cálculo de notas</h2>
-            <p>Selecciona la materia a evaluar e introduce las notas de los criterios TEC4. Los encabezados de la tabla de correlación son clicables para activar/desactivar criterios. Un criterio desactivado significa que el/la alumno/a lo tiene aprobado del curso anterior.</p>
-            <div class="selector-materia">
-                <label style="font-weight:600;">Materia:</label>
-                <div id="materiaRadios" style="display:flex; flex-wrap:wrap; gap:6px;">
-                    <label style="display:inline-flex; align-items:center; gap:4px; padding:5px 12px; border:1px solid #cbd5e1; border-radius:8px; cursor:pointer; background:white; font-size:0.88rem; font-weight:500; transition:all 0.15s;">
-                        <input type="radio" name="materiaRadio" value="TYD3" checked style="cursor:pointer;" /> TYD3
-                    </label>
-                    <label style="display:inline-flex; align-items:center; gap:4px; padding:5px 12px; border:1px solid #cbd5e1; border-radius:8px; cursor:pointer; background:white; font-size:0.88rem; font-weight:500; transition:all 0.15s;">
-                        <input type="radio" name="materiaRadio" value="TYD2" style="cursor:pointer;" /> TYD2
-                    </label>
-                    <label style="display:inline-flex; align-items:center; gap:4px; padding:5px 12px; border:1px solid #cbd5e1; border-radius:8px; cursor:pointer; background:white; font-size:0.88rem; font-weight:500; transition:all 0.15s;">
-                        <input type="radio" name="materiaRadio" value="CYR3" style="cursor:pointer;" /> CYR3
-                    </label>
-                    <label style="display:inline-flex; align-items:center; gap:4px; padding:5px 12px; border:1px solid #cbd5e1; border-radius:8px; cursor:pointer; background:white; font-size:0.88rem; font-weight:500; transition:all 0.15s;">
-                        <input type="radio" name="materiaRadio" value="CYR2" style="cursor:pointer;" /> CYR2
-                    </label>
-                    <label style="display:inline-flex; align-items:center; gap:4px; padding:5px 12px; border:1px solid #cbd5e1; border-radius:8px; cursor:pointer; background:white; font-size:0.88rem; font-weight:500; transition:all 0.15s;">
-                        <input type="radio" name="materiaRadio" value="CYR1" style="cursor:pointer;" /> CYR1
-                    </label>
-                </div>
-                <!-- Hidden select para compatibilidad con código existente que lee materiaSelect.value -->
-                <select id="materiaSelect" style="display:none;">
-                    <option value="TYD3">TYD3</option>
-                    <option value="TYD2">TYD2</option>
-                    <option value="CYR3">CYR3</option>
-                    <option value="CYR2">CYR2</option>
-                    <option value="CYR1">CYR1</option>
-                </select>
-                <span style="margin-left:auto;font-size:0.8rem;color:#475569;">
-                    <span class="badge badge-fuerte">Fuerte 0.5</span>
-                    <span class="badge badge-media">Media 0.25</span>
-                    <span class="badge badge-debil">Débil 0.1</span>
-                    <span class="badge badge-inactive">Inactivo</span>
-                </span>
+            <p>Activa/desactiva las materias evaluadas del alumno/a. Los encabezados de cada matriz son clicables para activar/desactivar criterios (un criterio desactivado significa que el alumno lo tiene aprobado del curso anterior). Al pulsar "Calcular notas" se mostrarán los resultados de todas las materias activas.</p>
+            <!-- Hidden select para compatibilidad -->
+            <select id="materiaSelect" style="display:none;">
+                <option value="TYD3">TYD3</option>
+                <option value="TYD2">TYD2</option>
+                <option value="CYR3">CYR3</option>
+                <option value="CYR2">CYR2</option>
+                <option value="CYR1">CYR1</option>
+            </select>
+            <div style="margin:10px 0; font-size:0.8rem; color:#475569;">
+                <span class="badge badge-fuerte">Fuerte 0.5</span>
+                <span class="badge badge-media">Media 0.25</span>
+                <span class="badge badge-debil">Débil 0.1</span>
+                <span class="badge badge-inactive">Inactivo</span>
             </div>
 
             <!-- ===== GESTIÓN DE ALUMNOS ===== -->
@@ -800,7 +770,7 @@
                 </div>
                 <p style="font-size:0.75rem; color:#64748b; margin:6px 0 0;">
                     Activa o desactiva las materias que este alumno/a tiene que evaluar.
-                    Si desactivas una materia, no se calculará su nota ni aparecerá en sus exportaciones.
+                    Al pulsar "Calcular notas" se mostrarán los resultados de todas las materias activas, apiladas verticalmente.
                 </p>
                 <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:12px;">
                     <button id="importAlumnosBtn" class="btn btn-success" type="button">📥 Importar alumnos (Excel)</button>
@@ -840,13 +810,13 @@
                 </div>
             </div>
 
-            <!-- Matriz de correlación interactiva (solo encabezados por defecto) -->
+            <!-- Matrices de correlación interactivas (una por materia activa) -->
             <div style="margin:18px 0;">
                 <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
-                    <h3 style="margin:0; font-size:0.95rem; color:#1e293b;">📋 Matriz de correlación TEC4 ↔ <span id="matrixCalculoMateriaLabel">TYD3</span></h3>
-                    <button id="toggleMatrixBtn" class="btn btn-secondary" type="button" style="padding:5px 14px; font-size:0.8rem;">⬇️ Mostrar matriz completa</button>
+                    <h3 style="margin:0; font-size:0.95rem; color:#1e293b;">📋 Matrices de correlación</h3>
+                    <button id="toggleMatrixBtn" class="btn btn-secondary" type="button" style="padding:5px 14px; font-size:0.8rem;">⬇️ Mostrar matrices completas</button>
                 </div>
-                <div class="matrix-wrapper" id="matrixCalculo"></div>
+                <div id="matrixCalculoContainer"></div>
             </div>
 
             <div class="form-section">
@@ -1756,7 +1726,7 @@
             // este alumno, mostrar un aviso
             const materiaSeleccionada = document.getElementById('materiaSelect').value;
             if (materiaSeleccionada === materiaKey) {
-                renderCalculo(materiaSeleccionada);
+                renderCalculo();
                 document.getElementById('resultadosCalculo').style.display = 'none';
             }
         }
@@ -1809,7 +1779,7 @@
             renderAlumnoSelect();
             renderMateriasCheckboxes();
             cargarNotasAlumnoEnForm();
-            renderCalculo(document.getElementById('materiaSelect').value);
+            renderCalculo();
         }
 
         /** Renombra el alumno actual */
@@ -1849,7 +1819,7 @@
             renderAlumnoSelect();
             renderMateriasCheckboxes();
             cargarNotasAlumnoEnForm();
-            renderCalculo(document.getElementById('materiaSelect').value);
+            renderCalculo();
             document.getElementById('resultadosCalculo').style.display = 'none';
         }
 
@@ -2006,7 +1976,7 @@
                     renderAlumnoSelect();
                     renderMateriasCheckboxes();
                     cargarNotasAlumnoEnForm();
-                    renderCalculo(document.getElementById('materiaSelect').value);
+                    renderCalculo();
                     document.getElementById('resultadosCalculo').style.display = 'none';
                     alert(`Importación completada: ${importados.length} alumnos.`);
                 } catch (err) {
@@ -3128,7 +3098,7 @@
             // Re-renderizar matrices estáticas (para mostrar/ocultar celdas editables)
             renderStaticMatrices();
             // Re-renderizar la matriz interactiva del cálculo
-            renderCalculo(document.getElementById('materiaSelect').value);
+            renderCalculo();
             // Ocultar resultados (podrían estar obsoletos respecto a los permisos)
             const res = document.getElementById('resultadosCalculo');
             if (res) res.style.display = 'none';
@@ -3699,7 +3669,7 @@
                         // en esa pestaña y hay una materia seleccionada
                         const materiaSelect = document.getElementById('materiaSelect');
                         if (materiaSelect) {
-                            renderCalculo(materiaSelect.value);
+                            renderCalculo();
                         }
                     }
                 });
@@ -3749,7 +3719,7 @@
                     renderAlumnoSelect();
                     renderMateriasCheckboxes();
                     cargarNotasAlumnoEnForm();
-                    renderCalculo(document.getElementById('materiaSelect').value);
+                    renderCalculo();
                     actualizarLastSyncDisplay(remoteLastUpdated);
                     updateFirebaseStatus('synced');
                     // Ocultar resultados (pueden estar obsoletos)
@@ -3984,7 +3954,7 @@
                 renderAlumnoSelect();
                 renderMateriasCheckboxes();
                 cargarNotasAlumnoEnForm();
-                renderCalculo(document.getElementById('materiaSelect').value);
+                renderCalculo();
                 document.getElementById('resultadosCalculo').style.display = 'none';
                 actualizarLastSyncDisplay(data.lastUpdated);
                 updateFirebaseStatus('synced');
@@ -4424,7 +4394,7 @@
                         renderAlumnoSelect();
                         renderMateriasCheckboxes();
                         cargarNotasAlumnoEnForm();
-                        renderCalculo(document.getElementById('materiaSelect').value);
+                        renderCalculo();
                         document.getElementById('resultadosCalculo').style.display = 'none';
                         alert('Datos importados correctamente (' + data.alumnos.length + ' alumnos).');
                         return;
@@ -4460,7 +4430,7 @@
                         renderAlumnoSelect();
                         renderMateriasCheckboxes();
                         cargarNotasAlumnoEnForm();
-                        renderCalculo(document.getElementById('materiaSelect').value);
+                        renderCalculo();
                         document.getElementById('resultadosCalculo').style.display = 'none';
                         alert('Datos importados correctamente (formato antiguo, 1 alumno).');
                         return;
@@ -4608,7 +4578,7 @@
                     if (contents[target]) contents[target].classList.add('active');
                     if (target === 'tabCalculo') {
                         const materia = document.getElementById('materiaSelect').value;
-                        renderCalculo(materia);
+                        renderCalculo();
                         document.getElementById('resultadosCalculo').style.display = 'none';
                     }
                 });
@@ -4622,45 +4592,181 @@
         // Estado del toggle de la matriz (solo encabezados vs completa)
         let matrixCalculoHeadersOnly = true;
 
-        function renderCalculo(materiaKey) {
-            // Ocultar tooltip antes de reemplazar el HTML (evita referencias colgantes)
+        /**
+         * Renderiza las matrices de correlación interactivas para TODAS las
+         * materias activas del alumno actual, apiladas verticalmente.
+         */
+        function renderCalculo() {
             globalTooltip.hide();
-            // Actualizar la etiqueta de la materia
-            const label = document.getElementById('matrixCalculoMateriaLabel');
-            if (label) label.textContent = materiaKey;
-            const container = document.getElementById('matrixCalculo');
-            container.innerHTML = buildInteractiveTable(materiaKey);
+            const container = document.getElementById('matrixCalculoContainer');
+            if (!container) return;
 
-            // Aplicar modo solo-encabezados si está activado
-            const table = container.querySelector('#interactiveTable');
-            if (table && matrixCalculoHeadersOnly) {
-                table.classList.add('headers-only');
-            }
+            const alumno = getAlumnoActual();
+            const materiasActivas = (alumno && alumno.materias) || MATERIAS_EVALUABLES.slice();
 
             // Actualizar texto del botón toggle
             const toggleBtn = document.getElementById('toggleMatrixBtn');
             if (toggleBtn) {
                 toggleBtn.textContent = matrixCalculoHeadersOnly
-                    ? '⬇️ Mostrar matriz completa'
+                    ? '⬇️ Mostrar matrices completas'
                     : '⬆️ Mostrar solo encabezados';
             }
 
-            container.querySelectorAll('.clickable-header').forEach(th => {
-                th.addEventListener('click', function() {
-                    const tydId = this.dataset.tyd;
-                    // ===== Estado por alumno (no global) =====
-                    const alumno = getAlumnoActual();
-                    if (!alumno) return;
-                    if (!alumno.criteriosActivos) alumno.criteriosActivos = inicializarCriteriosActivos();
-                    if (!alumno.criteriosActivos[materiaKey]) {
-                        alumno.criteriosActivos[materiaKey] = inicializarCriteriosActivosMateria(materiaKey);
-                    }
-                    const activeState = alumno.criteriosActivos[materiaKey];
-                    activeState[tydId] = !activeState[tydId];
-                    saveAlumnos();
-                    renderCalculo(materiaKey);
+            let html = '';
+            materiasActivas.forEach(function(mk) {
+                html += '<div style="margin-bottom:14px;">';
+                html += '<h4 style="margin:0 0 6px; font-size:0.88rem; color:#334155;">TEC4 ↔ ' + mk + '</h4>';
+                html += '<div class="matrix-wrapper" data-materia="' + mk + '">';
+                html += buildInteractiveTable(mk);
+                html += '</div>';
+                html += '</div>';
+            });
+            container.innerHTML = html;
+
+            // Aplicar modo solo-encabezados y conectar listeners
+            container.querySelectorAll('.matrix-wrapper').forEach(function(wrapper) {
+                const mk = wrapper.dataset.materia;
+                const table = wrapper.querySelector('#interactiveTable');
+                if (table && matrixCalculoHeadersOnly) {
+                    table.classList.add('headers-only');
+                }
+                wrapper.querySelectorAll('.clickable-header').forEach(function(th) {
+                    th.addEventListener('click', function() {
+                        const tydId = this.dataset.tyd;
+                        const al = getAlumnoActual();
+                        if (!al) return;
+                        if (!al.criteriosActivos) al.criteriosActivos = inicializarCriteriosActivos();
+                        if (!al.criteriosActivos[mk]) {
+                            al.criteriosActivos[mk] = inicializarCriteriosActivosMateria(mk);
+                        }
+                        al.criteriosActivos[mk][tydId] = !al.criteriosActivos[mk][tydId];
+                        saveAlumnos();
+                        renderCalculo();
+                    });
                 });
             });
+        }
+
+        /**
+         * Muestra los resultados de TODAS las materias activas del alumno,
+         * apilados verticalmente.
+         */
+        function showAllResults() {
+            globalTooltip.hide();
+            const container = document.getElementById('resultadosCalculo');
+            if (!container) return;
+
+            const alumno = getAlumnoActual();
+            const materiasActivas = (alumno && alumno.materias) || MATERIAS_EVALUABLES.slice();
+
+            if (materiasActivas.length === 0) {
+                container.style.display = 'block';
+                container.innerHTML = '<p style="padding:14px;color:#b91c1c;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;">⚠️ No hay materias activas para este alumno/a. Activa al menos una materia en las casillas "Materias evaluadas".</p>';
+                return;
+            }
+
+            container.style.display = 'block';
+            let fullHtml = '';
+            const nombreAlumno = alumno ? (alumno.nombre + (alumno.unidad ? ' (' + alumno.unidad + ')' : '')) : '';
+
+            materiasActivas.forEach(function(mk) {
+                try {
+                    fullHtml += showResultsHTML(mk, nombreAlumno);
+                } catch (err) {
+                    console.error('[showAllResults] Error en materia ' + mk + ':', err);
+                    fullHtml += '<div style="margin-bottom:20px;"><h3>Resultados para ' + mk + '</h3>';
+                    fullHtml += '<p style="color:#b91c1c;">❌ Error: ' + escapeHtml(err.message) + '</p></div>';
+                }
+            });
+
+            container.innerHTML = fullHtml;
+            // Conectar listeners de botones de exportación
+            const btnJson = document.getElementById('btnExportResultJSON');
+            const btnXlsx = document.getElementById('btnExportResultExcel');
+            if (btnJson) btnJson.addEventListener('click', function() { exportarResultadosJSON(); });
+            if (btnXlsx) btnXlsx.addEventListener('click', function() { exportarResultadosExcel(); });
+        }
+
+        /**
+         * Genera el HTML de resultados para una materia concreta (sin
+         * inyectarlo en el DOM). Usado por showAllResults para apilar
+         * múltiples materias.
+         */
+        function showResultsHTML(materiaKey, nombreAlumno) {
+            const scores = getTecScores();
+            const activeState = getActiveStateAlumnoActual(materiaKey);
+            const results = calculateScores(materiaKey, scores, activeState);
+
+            const groups = groupByCompetence(results.map(r => ({ id: r.id, text: r.text, nota: r.nota, active: r.active,
+                totalWeight: r.totalWeight || 0, relCount: r.relCount || 0 })));
+            const compKeys = Object.keys(groups);
+
+            const titulo = nombreAlumno
+                ? `Resultados para ${materiaKey} — ${escapeHtml(nombreAlumno)}`
+                : `Resultados para ${materiaKey}`;
+            let html = `<div style="margin-bottom:24px; padding-bottom:16px; border-bottom:1px solid #e2e8f0;">`;
+            html += `<h3>${titulo}</h3>`;
+            html += '<table class="result-table">';
+            html += '<thead><tr><th style="width:80px;">Criterio #</th>';
+            compKeys.forEach(comp => {
+                const compText = getCompetenciaText(materiaKey, comp);
+                const compCode = getCompetenciaCode(materiaKey, comp);
+                const compTip = compText
+                    ? `<span class="tooltip-text">Competencia específica ${escapeHtml(compCode)}: ${escapeHtml(compText)}</span>`
+                    : '';
+                const pastel = getPastelClass(comp, 'CALC');
+                html += `<th class="tooltip-trigger competencia-header ${pastel}">Competencia ${comp}${compTip}</th>`;
+            });
+            html += '</tr></thead><tbody>';
+
+            const maxRows = Math.max(...compKeys.map(k => groups[k].length));
+            for (let i = 0; i < maxRows; i++) {
+                html += '<tr>';
+                html += `<td class="competencia-label">${i+1}</td>`;
+                compKeys.forEach(comp => {
+                    const items = groups[comp];
+                    const pastel = getPastelClass(comp, 'CALC');
+                    if (i < items.length) {
+                        const r = items[i];
+                        const notaStr = r.active ? r.nota.toFixed(2) : 'No evaluado';
+                        const cls = r.active ? 'nota-cell' : 'inactive-cell';
+                        const tipText = buildCriterioTooltip(materiaKey, r);
+                        html += `<td class="${pastel}">
+                                    <span class="criterio-code tooltip-trigger">
+                                        ${r.id}
+                                        <span class="tooltip-text">${tipText}</span>
+                                    </span>
+                                    <br>
+                                    <span class="${cls}">${notaStr}</span>
+                                    ${r.active ? `<br><span style="font-size:0.7rem;color:#475569;">(${r.relCount} rels, peso ${r.totalWeight.toFixed(2)})</span>` : ''}
+                                </td>`;
+                    } else {
+                        html += `<td class="${pastel}"></td>`;
+                    }
+                });
+                html += '</tr>';
+            }
+            html += '</tbody></table>';
+
+            const activeResults = results.filter(r => r.active);
+            const total = activeResults.reduce((sum, r) => sum + r.nota, 0);
+            const media = activeResults.length > 0 ? total / activeResults.length : null;
+            if (media === null) {
+                html += `<p><strong>⚠️ No hay criterios activos para calcular la nota media.</strong></p>`;
+            } else {
+                html += `<p><strong>NOTA MEDIA (${activeResults.length} criterios activos): ${media.toFixed(2)}</strong></p>`;
+            }
+            html += `</div>`;
+
+            // Guardar últimos resultados para exportación
+            lastResults = {
+                materiaKey: materiaKey,
+                results: results,
+                media: media,
+                activeCount: activeResults.length
+            };
+
+            return html;
         }
 
         // ============================================================
@@ -4949,31 +5055,6 @@
             // ===== Carga inicial desde Firebase (async, no bloquea) =====
             firebaseCargarInicial();
 
-            // ===== Selector de materia (radio buttons) =====
-            const materiaSelect = document.getElementById('materiaSelect');
-            if (materiaSelect && !materiaSelect.dataset.bound) {
-                materiaSelect.dataset.bound = '1';
-                materiaSelect.addEventListener('change', function() {
-                    const materia = this.value;
-                    // Sincronizar el radio button correspondiente
-                    const radio = document.querySelector('input[name="materiaRadio"][value="' + materia + '"]');
-                    if (radio) radio.checked = true;
-                    renderCalculo(materia);
-                    document.getElementById('resultadosCalculo').style.display = 'none';
-                });
-            }
-            // Listener de los radio buttons
-            const materiaRadios = document.querySelectorAll('input[name="materiaRadio"]');
-            materiaRadios.forEach(function(radio) {
-                radio.addEventListener('change', function() {
-                    const materia = this.value;
-                    // Sincronizar el select oculto
-                    if (materiaSelect) materiaSelect.value = materia;
-                    renderCalculo(materia);
-                    document.getElementById('resultadosCalculo').style.display = 'none';
-                });
-            });
-
             // ===== Selector de alumno =====
             const alumnoSelect = document.getElementById('alumnoSelect');
             if (alumnoSelect && !alumnoSelect.dataset.bound) {
@@ -4984,7 +5065,7 @@
                     saveAlumnos();
                     renderMateriasCheckboxes();
                     cargarNotasAlumnoEnForm();
-                    renderCalculo(document.getElementById('materiaSelect').value);
+                    renderCalculo();
                     document.getElementById('resultadosCalculo').style.display = 'none';
                 });
                 alumnoSelect.addEventListener('focus', function() {
@@ -5020,16 +5101,14 @@
 
             // ===== Botones de cálculo =====
             bindOnce('calculateBtn', function() {
-                const materia = document.getElementById('materiaSelect').value;
                 guardarNotasFormEnAlumno();
-                showResults(materia);
+                showAllResults();
             });
 
             // ===== Botón toggle de la matriz (solo encabezados / completa) =====
             bindOnce('toggleMatrixBtn', function() {
                 matrixCalculoHeadersOnly = !matrixCalculoHeadersOnly;
-                const materia = document.getElementById('materiaSelect').value;
-                renderCalculo(materia);
+                renderCalculo();
             });
 
             // ===== Exportación/importación JSON =====
@@ -5083,7 +5162,7 @@
             // evita duplicar el listener si ya estaba activo.
             startUserDataListener();
 
-            renderCalculo('TYD3');
+            renderCalculo();
         }
 
         document.addEventListener('DOMContentLoaded', init);
