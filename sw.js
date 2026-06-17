@@ -20,9 +20,10 @@
  *   v10 — eliminar selector de materia: resultados de todas las materias activas apiladas
  *   v11 — matrices se actualizan en tiempo real al activar/desactivar materias
  *   v12 — resultados también se actualizan en tiempo real al cambiar materias
+ *   v13 — confirmar: desmarcar materia elimina su tabla de resultados
  */
 
-const CACHE_VERSION = 'v12';
+const CACHE_VERSION = 'v13';
 const CACHE_NAME = 'matriz-tec4-' + CACHE_VERSION;
 const CDN_CACHE_NAME = 'matriz-tec4-cdn-' + CACHE_VERSION;
 const APP_SHELL = [
