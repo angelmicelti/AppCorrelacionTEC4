@@ -12,9 +12,10 @@
  *   v2 — bug fixes (race conditions, parseNotaEspanola, migración, etc.)
  *   v3 — panel de diagnóstico de auth + detección file:// + mejor manejo de errores
  *   v4 — fix: login no ocultaba pantalla de auth si recargarDatosTrasLogin fallaba
+ *   v5 — limpieza: eliminado panel de diagnóstico de acceso
  */
 
-const CACHE_VERSION = 'v4';
+const CACHE_VERSION = 'v5';
 const CACHE_NAME = 'matriz-tec4-' + CACHE_VERSION;
 const CDN_CACHE_NAME = 'matriz-tec4-cdn-' + CACHE_VERSION;
 const APP_SHELL = [
