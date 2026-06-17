@@ -1,0 +1,183 @@
+/**
+ * Service Worker para Matriz de correlación TEC4
+ *
+ * Estrategia de caching:
+ *   - App shell (HTML, CSS, JS embebido): cache-first con actualización en background
+ *   - CDN libraries (ExcelJS, SheetJS, Firebase): stale-while-revalidate
+ *   - Firebase API calls: siempre network (no se cachean)
+ *   - Navegación offline: servir la página cacheada
+ *
+ * Versiones:
+ *   v1 — versión inicial
+ */
+
+const CACHE_VERSION = 'v1';
+const CACHE_NAME = 'matriz-tec4-' + CACHE_VERSION;
+const APP_SHELL = [
+    './',
+    './matriz_correlacion_TEC4.html',
+    './manifest.json',
+    './icon-192.png',
+    './icon-512.png',
+    './icon-192-maskable.png',
+    './icon-512-maskable.png',
+    './apple-touch-icon.png',
+    './favicon.png',
+    './favicon.ico'
+];
+
+// Recursos de CDN que podemos cachear
+const CDN_CACHE_NAME = 'matriz-tec4-cdn-' + CACHE_VERSION;
+const CDN_ASSETS = [
+    'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js',
+    'https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js',
+    'https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js',
+    'https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js'
+];
+
+// ===== INSTALACIÓN =====
+self.addEventListener('install', function(event) {
+    event.waitUntil(
+        Promise.all([
+            // Pre-cachear el app shell
+            caches.open(CACHE_NAME).then(function(cache) {
+                return cache.addAll(APP_SHELL);
+            }),
+            // Pre-cachear los recursos de CDN
+            caches.open(CDN_CACHE_NAME).then(function(cache) {
+                return cache.addAll(CDN_ASSETS);
+            })
+        ]).then(function() {
+            // Forzar activación inmediata
+            return self.skipWaiting();
+        })
+    );
+});
+
+// ===== ACTIVACIÓN =====
+self.addEventListener('activate', function(event) {
+    event.waitUntil(
+        caches.keys().then(function(cacheNames) {
+            return Promise.all(
+                cacheNames.map(function(cacheName) {
+                    // Eliminar cachés de versiones anteriores
+                    if (cacheName.startsWith('matriz-tec4-') && cacheName !== CACHE_NAME && cacheName !== CDN_CACHE_NAME) {
+                        console.log('[SW] Eliminando caché antiguo:', cacheName);
+                        return caches.delete(cacheName);
+                    }
+                })
+            );
+        }).then(function() {
+            // Tomar control inmediato de todas las pestañas
+            return self.clients.claim();
+        })
+    );
+});
+
+// ===== FETCH =====
+self.addEventListener('fetch', function(event) {
+    const request = event.request;
+    const url = new URL(request.url);
+
+    // 1. NUNCA interceptar Firebase API (necesita conexión en tiempo real)
+    if (url.hostname.includes('firebasedatabase.app') ||
+        url.hostname.includes('firebaseio.com') ||
+        url.hostname.includes('gstatic.com') && url.pathname.includes('firebase')) {
+        return; // Dejar que el navegador lo gestione normalmente
+    }
+
+    // 2. Recursos de CDN: stale-while-revalidate
+    if (CDN_ASSETS.indexOf(request.url) !== -1 || url.hostname.includes('cdn.jsdelivr.net')) {
+        event.respondWith(staleWhileRevalidate(request, CDN_CACHE_NAME));
+        return;
+    }
+
+    // 3. Navegación (peticiones de documentos HTML): network-first con fallback a caché
+    if (request.mode === 'navigate') {
+        event.respondWith(
+            fetch(request)
+                .then(function(response) {
+                    // Actualizar el caché con la versión nueva
+                    var responseClone = response.clone();
+                    caches.open(CACHE_NAME).then(function(cache) {
+                        cache.put(request, responseClone);
+                    });
+                    return response;
+                })
+                .catch(function() {
+                    // Sin conexión: servir desde caché
+                    return caches.match(request)
+                        .then(function(cached) {
+                            return cached || caches.match('./matriz_correlacion_TEC4.html');
+                        });
+                })
+        );
+        return;
+    }
+
+    // 4. App shell (imágenes, manifest, etc.): cache-first
+    if (request.method === 'GET' && url.origin === self.location.origin) {
+        event.respondWith(
+            caches.match(request)
+                .then(function(cached) {
+                    if (cached) {
+                        // Devolver del caché y actualizar en background
+                        fetch(request).then(function(response) {
+                            if (response && response.status === 200) {
+                                caches.open(CACHE_NAME).then(function(cache) {
+                                    cache.put(request, response);
+                                });
+                            }
+                        }).catch(function() { /* offline, no importa */ });
+                        return cached;
+                    }
+                    // No está en caché: intentar red
+                    return fetch(request).then(function(response) {
+                        if (response && response.status === 200) {
+                            var responseClone = response.clone();
+                            caches.open(CACHE_NAME).then(function(cache) {
+                                cache.put(request, responseClone);
+                            });
+                        }
+                        return response;
+                    }).catch(function() {
+                        // Sin conexión y sin caché
+                        return new Response('', { status: 504, statusText: 'Offline' });
+                    });
+                })
+        );
+        return;
+    }
+});
+
+/**
+ * Estrategia stale-while-revalidate: devolver del caché inmediatamente
+ * y actualizar en background.
+ */
+function staleWhileRevalidate(request, cacheName) {
+    return caches.open(cacheName).then(function(cache) {
+        return cache.match(request).then(function(cachedResponse) {
+            var fetchPromise = fetch(request).then(function(networkResponse) {
+                if (networkResponse && networkResponse.status === 200) {
+                    cache.put(request, networkResponse.clone());
+                }
+                return networkResponse;
+            }).catch(function() {
+                // Sin conexión: si hay caché, ya se devolvió; si no, error
+                return cachedResponse || new Response('', { status: 504 });
+            });
+            // Devolver caché inmediatamente si existe, si no esperar a la red
+            return cachedResponse || fetchPromise;
+        });
+    });
+}
+
+// ===== MENSAJES desde la app =====
+self.addEventListener('message', function(event) {
+    if (event.data && event.data.type === 'SKIP_WAITING') {
+        self.skipWaiting();
+    }
+    if (event.data && event.data.type === 'GET_VERSION') {
+        event.ports[0].postMessage({ version: CACHE_VERSION });
+    }
+});
