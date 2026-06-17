@@ -4335,6 +4335,141 @@
         }
 
         // ============================================================
+        // 8b. EXPORTACIÓN DE RESULTADOS POR MATERIA (JSON y Excel)
+        // ============================================================
+
+        /**
+         * Exporta los resultados de UNA materia para el alumno actual a JSON.
+         * @param {string} materiaKey
+         */
+        function exportarResultadoMateriaJSON(materiaKey) {
+            const data = window._resultadosPorMateria && window._resultadosPorMateria[materiaKey];
+            if (!data) {
+                alert('No hay resultados calculados para ' + materiaKey + '. Pulsa "Calcular notas" primero.');
+                return;
+            }
+            const alumno = getAlumnoActual();
+            const exportData = {
+                materia: materiaKey,
+                alumno: alumno ? alumno.nombre : '',
+                unidad: alumno ? alumno.unidad : '',
+                fechaCalculo: new Date().toISOString(),
+                notaMedia: data.media,
+                criteriosActivos: data.activeCount,
+                criterios: data.results.filter(r => r.active).map(r => ({
+                    codigo: r.id,
+                    enunciado: r.text,
+                    nota: Number(r.nota.toFixed(2)),
+                    correlaciones: r.relCount,
+                    pesoTotal: Number((r.totalWeight || 0).toFixed(2))
+                }))
+            };
+            const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `CorrelaciónTEC4_Resultado_${materiaKey}_${alumno ? alumno.nombre.replace(/[^a-zA-Z0-9]/g, '_') : 'alumno'}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        /**
+         * Exporta los resultados de UNA materia para el alumno actual a Excel.
+         * Formato: una fila con el nombre del alumno como título, una fila de
+         * encabezados con los códigos de criterio, y una fila con las notas.
+         * @param {string} materiaKey
+         */
+        async function exportarResultadoMateriaExcel(materiaKey) {
+            if (typeof ExcelJS === 'undefined') {
+                alert('No se pudo cargar la librería ExcelJS. Revisa tu conexión a internet.');
+                return;
+            }
+            const data = window._resultadosPorMateria && window._resultadosPorMateria[materiaKey];
+            if (!data) {
+                alert('No hay resultados calculados para ' + materiaKey + '. Pulsa "Calcular notas" primero.');
+                return;
+            }
+            const alumno = getAlumnoActual();
+            const nombreAlumno = alumno ? alumno.nombre : 'Alumno';
+            const unidad = alumno ? (alumno.unidad || '') : '';
+
+            // Filtrar solo criterios activos
+            const activos = data.results.filter(r => r.active);
+
+            const wb = new ExcelJS.Workbook();
+            wb.creator = 'Matriz de correlación TEC4';
+            wb.created = new Date();
+            const ws = wb.addWorksheet(materiaKey);
+
+            // Fila 1: Título = nombre del alumno
+            const filaTitulo = ws.addRow([nombreAlumno + (unidad ? ' (' + unidad + ')' : '')]);
+            filaTitulo.height = 24;
+            filaTitulo.getCell(1).font = { bold: true, size: 14, color: { argb: 'FF0F172A' } };
+
+            // Fila 2: Subtítulo = materia y fecha
+            const fecha = new Date().toLocaleDateString();
+            ws.addRow([materiaKey + ' — Notas calculadas (' + fecha + ')']);
+
+            // Fila 3: vacía
+            ws.addRow([]);
+
+            // Fila 4: Encabezados = códigos de criterio
+            const headerRow = ws.addRow(activos.map(r => r.id));
+            headerRow.height = 22;
+            headerRow.eachCell(function(cell) {
+                cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF334155' } };
+                cell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
+                cell.border = {
+                    top: { style: 'thin' }, bottom: { style: 'thin' },
+                    left: { style: 'thin' }, right: { style: 'thin' }
+                };
+            });
+
+            // Fila 5: Notas de cada criterio
+            const notasRow = ws.addRow(activos.map(r => formatNotaEspanola(r.nota)));
+            notasRow.eachCell(function(cell) {
+                cell.alignment = { vertical: 'middle', horizontal: 'center' };
+                cell.border = {
+                    top: { style: 'thin' }, bottom: { style: 'thin' },
+                    left: { style: 'thin' }, right: { style: 'thin' }
+                };
+                // Colorear suspensas en rojo
+                const val = cell.value;
+                if (val) {
+                    const num = parseNotaEspanola(val);
+                    if (num < 5) {
+                        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFCDD2' } };
+                        cell.font = { bold: true, color: { argb: 'FFB91C1C' } };
+                    }
+                }
+            });
+
+            // Fila 6: NOTA MEDIA
+            if (data.media !== null) {
+                const mediaRow = ws.addRow([]);
+                mediaRow.getCell(1).value = 'NOTA MEDIA';
+                mediaRow.getCell(1).font = { bold: true };
+                mediaRow.getCell(2).value = formatNotaEspanola(data.media);
+                mediaRow.getCell(2).font = { bold: true, size: 13 };
+            }
+
+            // Anchos de columna
+            ws.getColumn(1).width = 20;
+            for (let i = 2; i <= activos.length; i++) ws.getColumn(i).width = 14;
+
+            const filename = `CorrelaciónTEC4_Resultado_${materiaKey}_${nombreAlumno.replace(/[^a-zA-Z0-9]/g, '_')}.xlsx`;
+            const buffer = await wb.xlsx.writeBuffer();
+            const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // ============================================================
         // 9. EXPORTACIÓN E IMPORTACIÓN
         // ============================================================
 
@@ -4681,11 +4816,15 @@
             });
 
             container.innerHTML = fullHtml;
-            // Conectar listeners de botones de exportación
-            const btnJson = document.getElementById('btnExportResultJSON');
-            const btnXlsx = document.getElementById('btnExportResultExcel');
-            if (btnJson) btnJson.addEventListener('click', function() { exportarResultadosJSON(); });
-            if (btnXlsx) btnXlsx.addEventListener('click', function() { exportarResultadosExcel(); });
+            // Conectar listeners de botones de exportación por materia
+            container.querySelectorAll('.export-result-btn').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    const mk = this.dataset.materia;
+                    const fmt = this.dataset.format;
+                    if (fmt === 'excel') exportarResultadoMateriaExcel(mk);
+                    else exportarResultadoMateriaJSON(mk);
+                });
+            });
         }
 
         /**
@@ -4759,12 +4898,21 @@
             }
             html += `</div>`;
 
-            // Guardar últimos resultados para exportación
-            lastResults = {
+            // Botones de exportación para esta materia
+            html += `<div style="margin-top:10px; display:flex; flex-wrap:wrap; gap:8px;">
+                        <button class="btn btn-success export-result-btn" type="button" data-materia="${materiaKey}" data-format="excel" style="padding:6px 14px; font-size:0.8rem;">📊 Exportar ${materiaKey} (Excel)</button>
+                        <button class="btn btn-secondary export-result-btn" type="button" data-materia="${materiaKey}" data-format="json" style="padding:6px 14px; font-size:0.8rem;">📄 Exportar ${materiaKey} (JSON)</button>
+                     </div>`;
+            html += `</div>`;
+
+            // Guardar resultados de esta materia para exportación
+            if (!window._resultadosPorMateria) window._resultadosPorMateria = {};
+            window._resultadosPorMateria[materiaKey] = {
                 materiaKey: materiaKey,
                 results: results,
                 media: media,
-                activeCount: activeResults.length
+                activeCount: activeResults.length,
+                nombreAlumno: nombreAlumno
             };
 
             return html;
