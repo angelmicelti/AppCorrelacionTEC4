@@ -1722,12 +1722,13 @@
                 alumno.materias.splice(idx, 1);
             }
             saveAlumnos();
-            // Si la materia actualmente mostrada en el cálculo no está activa para
-            // este alumno, mostrar un aviso
-            const materiaSeleccionada = document.getElementById('materiaSelect').value;
-            if (materiaSeleccionada === materiaKey) {
-                renderCalculo();
-                document.getElementById('resultadosCalculo').style.display = 'none';
+            // Re-renderizar las matrices en tiempo real
+            renderCalculo();
+            // Si los resultados están visibles, recalcularlos en tiempo real
+            // para que la nueva materia aparezca (o desaparezca) inmediatamente
+            const resultados = document.getElementById('resultadosCalculo');
+            if (resultados && resultados.style.display !== 'none') {
+                showAllResults();
             }
         }
 
