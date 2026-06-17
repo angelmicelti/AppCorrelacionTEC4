@@ -22,9 +22,10 @@
  *   v12 — resultados también se actualizan en tiempo real al cambiar materias
  *   v13 — confirmar: desmarcar materia elimina su tabla de resultados
  *   v14 — botones de exportación por materia (JSON y Excel) en cada bloque de resultados
+ *   v15 — notas en color: rojo < 5, verde >= 5 (formulario y resultados)
  */
 
-const CACHE_VERSION = 'v14';
+const CACHE_VERSION = 'v15';
 const CACHE_NAME = 'matriz-tec4-' + CACHE_VERSION;
 const CDN_CACHE_NAME = 'matriz-tec4-cdn-' + CACHE_VERSION;
 const APP_SHELL = [
