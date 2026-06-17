@@ -2,17 +2,20 @@
  * Service Worker para Matriz de correlación TEC4
  *
  * Estrategia de caching:
- *   - App shell (HTML, CSS, JS embebido): cache-first con actualización en background
+ *   - App shell (HTML, CSS, JS embebido): network-first con fallback a caché
  *   - CDN libraries (ExcelJS, SheetJS, Firebase): stale-while-revalidate
  *   - Firebase API calls: siempre network (no se cachean)
  *   - Navegación offline: servir la página cacheada
  *
  * Versiones:
  *   v1 — versión inicial
+ *   v2 — bug fixes (race conditions, parseNotaEspanola, migración, etc.)
+ *   v3 — panel de diagnóstico de auth + detección file:// + mejor manejo de errores
  */
 
-const CACHE_VERSION = 'v1';
+const CACHE_VERSION = 'v3';
 const CACHE_NAME = 'matriz-tec4-' + CACHE_VERSION;
+const CDN_CACHE_NAME = 'matriz-tec4-cdn-' + CACHE_VERSION;
 const APP_SHELL = [
     './',
     './matriz_correlacion_TEC4.html',
@@ -27,7 +30,6 @@ const APP_SHELL = [
 ];
 
 // Recursos de CDN que podemos cachear
-const CDN_CACHE_NAME = 'matriz-tec4-cdn-' + CACHE_VERSION;
 const CDN_ASSETS = [
     'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js',
     'https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js',
@@ -115,7 +117,9 @@ self.addEventListener('fetch', function(event) {
         return;
     }
 
-    // 4. App shell (imágenes, manifest, etc.): cache-first
+    // 4. App shell (imágenes, manifest, etc.): cache-first con revalidación
+    //    EXCEPTO el HTML principal que ya se maneja con network-first arriba
+    //    (request.mode === 'navigate'), así que aquí solo llegan assets.
     if (request.method === 'GET' && url.origin === self.location.origin) {
         event.respondWith(
             caches.match(request)
