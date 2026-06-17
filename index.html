@@ -1203,6 +1203,21 @@
                 .replace(/"/g, '&quot;');
         }
 
+        /**
+         * Sanitiza un texto para usarlo como nombre de archivo, preservando
+         * tildes, ñ y caracteres Unicode (letras y números de cualquier idioma).
+         * Solo elimina/reemplaza caracteres problemáticos para sistemas de
+         * archivos: / \ : * ? " < > | y espacios múltiples.
+         * @param {string} s
+         * @returns {string}
+         */
+        function sanitizeFilename(s) {
+            return String(s || '')
+                .replace(/[\/\\:*?"<>|]/g, '_')  // caracteres prohibidos en filenames
+                .replace(/\s+/g, ' ')              // espacios múltiples → uno solo
+                .trim();
+        }
+
         function buildCriterioTooltip(materiaKey, criterio) {
             const parts = criterio.id.split('.');
             const compNum = parts[2]; // segundo número = competencia específica
@@ -4397,7 +4412,7 @@
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `CorrelaciónTEC4_Resultado_${materiaKey}_${alumno ? alumno.nombre.replace(/[^a-zA-Z0-9]/g, '_') : 'alumno'}.json`;
+            a.download = `CorrelaciónTEC4_Resultado_${materiaKey}_${sanitizeFilename(alumno ? alumno.nombre : 'alumno')}.json`;
             a.click();
             URL.revokeObjectURL(url);
         }
@@ -4487,7 +4502,7 @@
             ws.getColumn(1).width = 20;
             for (let i = 2; i <= activos.length; i++) ws.getColumn(i).width = 14;
 
-            const filename = `CorrelaciónTEC4_Resultado_${materiaKey}_${nombreAlumno.replace(/[^a-zA-Z0-9]/g, '_')}.xlsx`;
+            const filename = `CorrelaciónTEC4_Resultado_${materiaKey}_${sanitizeFilename(nombreAlumno)}.xlsx`;
             const buffer = await wb.xlsx.writeBuffer();
             const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
             const url = URL.createObjectURL(blob);
