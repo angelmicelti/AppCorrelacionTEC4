@@ -4150,7 +4150,13 @@
             const scores = {};
             TEC4.forEach(t => {
                 const input = document.getElementById(`nota_${t.id}`);
-                scores[t.id] = parseFloat(input.value) || 0;
+                if (input) {
+                    const v = input.value.trim();
+                    scores[t.id] = v === '' ? 5 : (parseFloat(v) || 0);
+                } else {
+                    // Si el input no existe (formulario no renderizado), usar 5
+                    scores[t.id] = 5;
+                }
             });
             return scores;
         }
@@ -4191,22 +4197,22 @@
 
         function showResults(materiaKey) {
             globalTooltip.hide();
-            // Comprobar si el alumno actual evalúa esta materia
-            const alumnoActual = getAlumnoActual();
-            if (alumnoActual && alumnoActual.materias && alumnoActual.materias.indexOf(materiaKey) === -1) {
-                const container = document.getElementById('resultadosCalculo');
-                container.style.display = 'block';
-                container.innerHTML = '<p style="padding:14px;color:#b91c1c;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;">' +
-                    '⚠️ La materia <strong>' + materiaKey + '</strong> no está activada para el alumno/a <strong>' +
-                    escapeHtml(alumnoActual.nombre) + '</strong>. Actívala en las casillas "Materias evaluadas" para poder calcular sus notas.</p>';
-                return;
-            }
-            const scores = getTecScores();
-            // Usar el estado de criterios activos del alumno actual (no global)
-            const activeState = getActiveStateAlumnoActual(materiaKey);
-            const results = calculateScores(materiaKey, scores, activeState);
             const container = document.getElementById('resultadosCalculo');
-            container.style.display = 'block';
+            if (!container) return;
+            try {
+                // Comprobar si el alumno actual evalúa esta materia
+                const alumnoActual = getAlumnoActual();
+                if (alumnoActual && alumnoActual.materias && alumnoActual.materias.indexOf(materiaKey) === -1) {
+                    container.style.display = 'block';
+                    container.innerHTML = '<p style="padding:14px;color:#b91c1c;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;">' +
+                        '⚠️ La materia <strong>' + materiaKey + '</strong> no está activada para el alumno/a <strong>' +
+                        escapeHtml(alumnoActual.nombre) + '</strong>. Actívala en las casillas "Materias evaluadas" para poder calcular sus notas.</p>';
+                    return;
+                }
+                const scores = getTecScores();
+                const activeState = getActiveStateAlumnoActual(materiaKey);
+                const results = calculateScores(materiaKey, scores, activeState);
+                container.style.display = 'block';
 
             const groups = groupByCompetence(results.map(r => ({ id: r.id, text: r.text, nota: r.nota, active: r.active,
                 totalWeight: r.totalWeight || 0, relCount: r.relCount || 0 })));
@@ -4308,6 +4314,13 @@
             const btnXlsx = document.getElementById('btnExportResultExcel');
             if (btnJson) btnJson.addEventListener('click', function() { exportarResultadosJSON(); });
             if (btnXlsx) btnXlsx.addEventListener('click', function() { exportarResultadosExcel(); });
+            } catch (err) {
+                console.error('[showResults] Error:', err);
+                container.style.display = 'block';
+                container.innerHTML = '<p style="padding:14px;color:#b91c1c;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;">' +
+                    '❌ Error al calcular las notas: ' + escapeHtml(err.message) + '<br><br>' +
+                    'Intenta recargar la página. Si el problema persiste, revisa la consola (F12) para más detalles.</p>';
+            }
         }
 
         // ============================================================
