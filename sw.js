@@ -14,9 +14,10 @@
  *   v4 — fix: login no ocultaba pantalla de auth si recargarDatosTrasLogin fallaba
  *   v5 — limpieza: eliminado panel de diagnóstico de acceso
  *   v6 — fix: getTecScores crash si inputs no existen + try/catch en showResults
+ *   v7 — matriz de cálculo como acordeón replegable
  */
 
-const CACHE_VERSION = 'v6';
+const CACHE_VERSION = 'v7';
 const CACHE_NAME = 'matriz-tec4-' + CACHE_VERSION;
 const CDN_CACHE_NAME = 'matriz-tec4-cdn-' + CACHE_VERSION;
 const APP_SHELL = [
