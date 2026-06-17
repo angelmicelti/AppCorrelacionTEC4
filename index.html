@@ -4,6 +4,20 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Matriz de correlación TEC4 – TYD / CYR</title>
+    <!-- ===== PWA META TAGS ===== -->
+    <meta name="theme-color" content="#2563eb" />
+    <meta name="description" content="Visualización y cálculo de la correlación entre criterios de evaluación de Tecnología (4.º ESO) y las materias TYD / CYR." />
+    <link rel="manifest" href="manifest.json" />
+    <link rel="icon" type="image/png" sizes="16x16" href="icon-16.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="icon-32.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png" />
+    <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
+    <link rel="shortcut icon" href="favicon.ico" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Matriz TEC4" />
+    <meta name="mobile-web-app-capable" content="yes" />
     <!-- ExcelJS para exportación a Excel con estilos (color de celdas suspensas) -->
     <!-- SheetJS se mantiene para importación de .xls/.xlsx/.ods -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -4921,6 +4935,29 @@
         }
 
         document.addEventListener('DOMContentLoaded', init);
+
+        // ===== REGISTRO DEL SERVICE WORKER (PWA) =====
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('sw.js')
+                    .then(function(reg) {
+                        console.log('[PWA] Service Worker registrado:', reg.scope);
+                        // Escuchar actualizaciones del SW
+                        reg.addEventListener('updatefound', function() {
+                            var newWorker = reg.installing;
+                            newWorker.addEventListener('statechange', function() {
+                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                    // Hay una nueva versión disponible
+                                    console.log('[PWA] Nueva versión disponible. Recarga para actualizar.');
+                                }
+                            });
+                        });
+                    })
+                    .catch(function(err) {
+                        console.warn('[PWA] Error registrando Service Worker:', err);
+                    });
+            });
+        }
     </script>
 </body>
 </html>
