@@ -15,9 +15,10 @@
  *   v5 — limpieza: eliminado panel de diagnóstico de acceso
  *   v6 — fix: getTecScores crash si inputs no existen + try/catch en showResults
  *   v7 — matriz de cálculo como acordeón replegable
+ *   v8 — matriz de cálculo: solo encabezados por defecto + botón toggle
  */
 
-const CACHE_VERSION = 'v7';
+const CACHE_VERSION = 'v8';
 const CACHE_NAME = 'matriz-tec4-' + CACHE_VERSION;
 const CDN_CACHE_NAME = 'matriz-tec4-cdn-' + CACHE_VERSION;
 const APP_SHELL = [
