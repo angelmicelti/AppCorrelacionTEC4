@@ -17,9 +17,10 @@
  *   v7 — matriz de cálculo como acordeón replegable
  *   v8 — matriz de cálculo: solo encabezados por defecto + botón toggle
  *   v9 — selector de materia con radio buttons
+ *   v10 — eliminar selector de materia: resultados de todas las materias activas apiladas
  */
 
-const CACHE_VERSION = 'v9';
+const CACHE_VERSION = 'v10';
 const CACHE_NAME = 'matriz-tec4-' + CACHE_VERSION;
 const CDN_CACHE_NAME = 'matriz-tec4-cdn-' + CACHE_VERSION;
 const APP_SHELL = [
