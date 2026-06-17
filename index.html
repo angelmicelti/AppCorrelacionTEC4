@@ -3135,15 +3135,26 @@
             // Recalcular el path de Firebase para que apunte a los datos
             // aislados de este usuario
             refreshFirebaseDataPath();
-            // Cargar datos del usuario (alumnos, etc.) ANTES de iniciar el
-            // listener de tiempo real para evitar race conditions: si el
-            // listener se arranca primero y trae datos remotos, podrían
-            // sobrescribir los locales antes de cargarlos.
-            await recargarDatosTrasLogin();
-            // Ahora sí, iniciar el listener de tiempo real
-            startUserDataListener();
+            // OCULTAR la pantalla de login Y MOSTRAR la app INMEDIATAMENTE,
+            // antes de cargar datos. Así el usuario ve feedback instantáneo
+            // del login exitoso, incluso si la carga de datos tarda o falla.
             hideAuthScreen();
             updateUserInfoBar();
+            // Cargar datos del usuario (alumnos, etc.) con try/catch para
+            // que un error no deje la UI en estado inconsistente.
+            try {
+                await recargarDatosTrasLogin();
+            } catch (e) {
+                console.error('[Auth] Error cargando datos tras login:', e);
+                // No mostrar alerta scare; la app seguirá funcionando con
+                // localStorage y se sincronizará cuando Firebase vuelva.
+            }
+            // Iniciar el listener de tiempo real (con try/catch por seguridad)
+            try {
+                startUserDataListener();
+            } catch (e) {
+                console.error('[Auth] Error iniciando listener:', e);
+            }
         }
 
         /** Cierra la sesión y vuelve a la pantalla de login. */
