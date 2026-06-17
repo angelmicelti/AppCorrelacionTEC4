@@ -16,9 +16,10 @@
  *   v6 — fix: getTecScores crash si inputs no existen + try/catch en showResults
  *   v7 — matriz de cálculo como acordeón replegable
  *   v8 — matriz de cálculo: solo encabezados por defecto + botón toggle
+ *   v9 — selector de materia con radio buttons
  */
 
-const CACHE_VERSION = 'v8';
+const CACHE_VERSION = 'v9';
 const CACHE_NAME = 'matriz-tec4-' + CACHE_VERSION;
 const CDN_CACHE_NAME = 'matriz-tec4-cdn-' + CACHE_VERSION;
 const APP_SHELL = [
