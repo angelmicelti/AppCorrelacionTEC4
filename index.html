@@ -338,6 +338,11 @@
             opacity: 0.7;
         }
 
+        /* Matriz de cálculo: modo solo encabezados (tbody oculto) */
+        #interactiveTable.headers-only tbody {
+            display: none;
+        }
+
         /* Encabezados de competencia específica (clicables con tooltip) */
         .competencia-header {
             cursor: help;
@@ -807,15 +812,14 @@
                 </div>
             </div>
 
-            <!-- Matriz de correlación interactiva (acordeón replegado por defecto) -->
-            <details id="matrixCalculoWrapper" style="margin:18px 0;">
-                <summary style="cursor:pointer; font-size:0.92rem; font-weight:600; color:#1e293b; padding:10px 16px; background:#f1f5f9; border:1px solid #e2e8f0; border-radius:10px; list-style:none; display:flex; align-items:center; gap:8px; user-select:none;">
-                    <span style="font-size:1.1rem;">📋</span>
-                    <span>Matriz de correlación TEC4 ↔ <span id="matrixCalculoMateriaLabel">TYD3</span></span>
-                    <span style="margin-left:auto; font-size:0.74rem; color:#64748b; font-weight:400;">(clic para desplegar/replegar)</span>
-                </summary>
-                <div class="matrix-wrapper" id="matrixCalculo" style="margin-top:8px;"></div>
-            </details>
+            <!-- Matriz de correlación interactiva (solo encabezados por defecto) -->
+            <div style="margin:18px 0;">
+                <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+                    <h3 style="margin:0; font-size:0.95rem; color:#1e293b;">📋 Matriz de correlación TEC4 ↔ <span id="matrixCalculoMateriaLabel">TYD3</span></h3>
+                    <button id="toggleMatrixBtn" class="btn btn-secondary" type="button" style="padding:5px 14px; font-size:0.8rem;">⬇️ Mostrar matriz completa</button>
+                </div>
+                <div class="matrix-wrapper" id="matrixCalculo"></div>
+            </div>
 
             <div class="form-section">
                 <h3>Notas del alumno en criterios TEC4 (agrupadas por competencia)</h3>
@@ -4587,14 +4591,31 @@
         // 11. RENDERIZADO DE LA TABLA DE CÁLCULO (interactiva)
         // ============================================================
 
+        // Estado del toggle de la matriz (solo encabezados vs completa)
+        let matrixCalculoHeadersOnly = true;
+
         function renderCalculo(materiaKey) {
             // Ocultar tooltip antes de reemplazar el HTML (evita referencias colgantes)
             globalTooltip.hide();
-            // Actualizar la etiqueta de la materia en el encabezado del acordeón
+            // Actualizar la etiqueta de la materia
             const label = document.getElementById('matrixCalculoMateriaLabel');
             if (label) label.textContent = materiaKey;
             const container = document.getElementById('matrixCalculo');
             container.innerHTML = buildInteractiveTable(materiaKey);
+
+            // Aplicar modo solo-encabezados si está activado
+            const table = container.querySelector('#interactiveTable');
+            if (table && matrixCalculoHeadersOnly) {
+                table.classList.add('headers-only');
+            }
+
+            // Actualizar texto del botón toggle
+            const toggleBtn = document.getElementById('toggleMatrixBtn');
+            if (toggleBtn) {
+                toggleBtn.textContent = matrixCalculoHeadersOnly
+                    ? '⬇️ Mostrar matriz completa'
+                    : '⬆️ Mostrar solo encabezados';
+            }
 
             container.querySelectorAll('.clickable-header').forEach(th => {
                 th.addEventListener('click', function() {
@@ -4960,6 +4981,13 @@
                 const materia = document.getElementById('materiaSelect').value;
                 guardarNotasFormEnAlumno();
                 showResults(materia);
+            });
+
+            // ===== Botón toggle de la matriz (solo encabezados / completa) =====
+            bindOnce('toggleMatrixBtn', function() {
+                matrixCalculoHeadersOnly = !matrixCalculoHeadersOnly;
+                const materia = document.getElementById('materiaSelect').value;
+                renderCalculo(materia);
             });
 
             // ===== Exportación/importación JSON =====
