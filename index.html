@@ -343,6 +343,16 @@
             display: none;
         }
 
+        /* Radio buttons de materia: resaltar el seleccionado */
+        #materiaRadios label:has(input:checked) {
+            background: #2563eb !important;
+            color: white !important;
+            border-color: #2563eb !important;
+        }
+        #materiaRadios label:has(input:checked) input {
+            accent-color: white;
+        }
+
         /* Encabezados de competencia específica (clicables con tooltip) */
         .competencia-header {
             cursor: help;
@@ -740,8 +750,26 @@
             <h2>📈 Cálculo de notas</h2>
             <p>Selecciona la materia a evaluar e introduce las notas de los criterios TEC4. Los encabezados de la tabla de correlación son clicables para activar/desactivar criterios. Un criterio desactivado significa que el/la alumno/a lo tiene aprobado del curso anterior.</p>
             <div class="selector-materia">
-                <label for="materiaSelect">Materia:</label>
-                <select id="materiaSelect">
+                <label style="font-weight:600;">Materia:</label>
+                <div id="materiaRadios" style="display:flex; flex-wrap:wrap; gap:6px;">
+                    <label style="display:inline-flex; align-items:center; gap:4px; padding:5px 12px; border:1px solid #cbd5e1; border-radius:8px; cursor:pointer; background:white; font-size:0.88rem; font-weight:500; transition:all 0.15s;">
+                        <input type="radio" name="materiaRadio" value="TYD3" checked style="cursor:pointer;" /> TYD3
+                    </label>
+                    <label style="display:inline-flex; align-items:center; gap:4px; padding:5px 12px; border:1px solid #cbd5e1; border-radius:8px; cursor:pointer; background:white; font-size:0.88rem; font-weight:500; transition:all 0.15s;">
+                        <input type="radio" name="materiaRadio" value="TYD2" style="cursor:pointer;" /> TYD2
+                    </label>
+                    <label style="display:inline-flex; align-items:center; gap:4px; padding:5px 12px; border:1px solid #cbd5e1; border-radius:8px; cursor:pointer; background:white; font-size:0.88rem; font-weight:500; transition:all 0.15s;">
+                        <input type="radio" name="materiaRadio" value="CYR3" style="cursor:pointer;" /> CYR3
+                    </label>
+                    <label style="display:inline-flex; align-items:center; gap:4px; padding:5px 12px; border:1px solid #cbd5e1; border-radius:8px; cursor:pointer; background:white; font-size:0.88rem; font-weight:500; transition:all 0.15s;">
+                        <input type="radio" name="materiaRadio" value="CYR2" style="cursor:pointer;" /> CYR2
+                    </label>
+                    <label style="display:inline-flex; align-items:center; gap:4px; padding:5px 12px; border:1px solid #cbd5e1; border-radius:8px; cursor:pointer; background:white; font-size:0.88rem; font-weight:500; transition:all 0.15s;">
+                        <input type="radio" name="materiaRadio" value="CYR1" style="cursor:pointer;" /> CYR1
+                    </label>
+                </div>
+                <!-- Hidden select para compatibilidad con código existente que lee materiaSelect.value -->
+                <select id="materiaSelect" style="display:none;">
                     <option value="TYD3">TYD3</option>
                     <option value="TYD2">TYD2</option>
                     <option value="CYR3">CYR3</option>
@@ -4921,16 +4949,30 @@
             // ===== Carga inicial desde Firebase (async, no bloquea) =====
             firebaseCargarInicial();
 
-            // ===== Selector de materia =====
+            // ===== Selector de materia (radio buttons) =====
             const materiaSelect = document.getElementById('materiaSelect');
             if (materiaSelect && !materiaSelect.dataset.bound) {
                 materiaSelect.dataset.bound = '1';
                 materiaSelect.addEventListener('change', function() {
                     const materia = this.value;
+                    // Sincronizar el radio button correspondiente
+                    const radio = document.querySelector('input[name="materiaRadio"][value="' + materia + '"]');
+                    if (radio) radio.checked = true;
                     renderCalculo(materia);
                     document.getElementById('resultadosCalculo').style.display = 'none';
                 });
             }
+            // Listener de los radio buttons
+            const materiaRadios = document.querySelectorAll('input[name="materiaRadio"]');
+            materiaRadios.forEach(function(radio) {
+                radio.addEventListener('change', function() {
+                    const materia = this.value;
+                    // Sincronizar el select oculto
+                    if (materiaSelect) materiaSelect.value = materia;
+                    renderCalculo(materia);
+                    document.getElementById('resultadosCalculo').style.display = 'none';
+                });
+            });
 
             // ===== Selector de alumno =====
             const alumnoSelect = document.getElementById('alumnoSelect');
