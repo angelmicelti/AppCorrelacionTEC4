@@ -807,7 +807,15 @@
                 </div>
             </div>
 
-            <div class="matrix-wrapper" id="matrixCalculo"></div>
+            <!-- Matriz de correlación interactiva (acordeón replegado por defecto) -->
+            <details id="matrixCalculoWrapper" style="margin:18px 0;">
+                <summary style="cursor:pointer; font-size:0.92rem; font-weight:600; color:#1e293b; padding:10px 16px; background:#f1f5f9; border:1px solid #e2e8f0; border-radius:10px; list-style:none; display:flex; align-items:center; gap:8px; user-select:none;">
+                    <span style="font-size:1.1rem;">📋</span>
+                    <span>Matriz de correlación TEC4 ↔ <span id="matrixCalculoMateriaLabel">TYD3</span></span>
+                    <span style="margin-left:auto; font-size:0.74rem; color:#64748b; font-weight:400;">(clic para desplegar/replegar)</span>
+                </summary>
+                <div class="matrix-wrapper" id="matrixCalculo" style="margin-top:8px;"></div>
+            </details>
 
             <div class="form-section">
                 <h3>Notas del alumno en criterios TEC4 (agrupadas por competencia)</h3>
@@ -4582,6 +4590,9 @@
         function renderCalculo(materiaKey) {
             // Ocultar tooltip antes de reemplazar el HTML (evita referencias colgantes)
             globalTooltip.hide();
+            // Actualizar la etiqueta de la materia en el encabezado del acordeón
+            const label = document.getElementById('matrixCalculoMateriaLabel');
+            if (label) label.textContent = materiaKey;
             const container = document.getElementById('matrixCalculo');
             container.innerHTML = buildInteractiveTable(materiaKey);
 
