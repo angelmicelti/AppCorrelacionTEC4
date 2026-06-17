@@ -399,6 +399,16 @@
             background: white;
             box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
         }
+        /* Notas TEC4: color dinámico según aprobado/suspenso */
+        .tec-table input[type="number"].nota-suspenso {
+            color: #dc2626 !important;
+            font-weight: 700;
+            border-color: #fca5a5;
+        }
+        .tec-table input[type="number"].nota-aprobado {
+            color: #16a34a !important;
+            font-weight: 600;
+        }
         .tec-table .criterio-code {
             font-weight: 600;
             font-size: 0.8rem;
@@ -427,6 +437,11 @@
         .result-table .nota-cell {
             font-weight: 700;
             font-size: 1.05rem;
+        }
+        .result-table .nota-cell.nota-suspenso {
+            color: #dc2626;
+        }
+        .result-table .nota-cell.nota-aprobado {
             color: #16a34a;
         }
         .result-table .inactive-cell {
@@ -1741,6 +1756,20 @@
                 if (input) {
                     const v = alumno.notas[t.id];
                     input.value = (v === undefined || v === null) ? 5 : v;
+                }
+            });
+            actualizarColoresNotasForm();
+        }
+
+        /** Actualiza el color de los inputs de notas (rojo < 5, verde >= 5) */
+        function actualizarColoresNotasForm() {
+            TEC4.forEach(t => {
+                const input = document.getElementById('nota_' + t.id);
+                if (!input) return;
+                input.classList.remove('nota-suspenso', 'nota-aprobado');
+                const v = parseFloat(input.value);
+                if (!isNaN(v)) {
+                    input.classList.add(v < 5 ? 'nota-suspenso' : 'nota-aprobado');
                 }
             });
         }
@@ -4260,7 +4289,7 @@
                     if (i < items.length) {
                         const r = items[i];
                         const notaStr = r.active ? r.nota.toFixed(2) : 'No evaluado';
-                        const cls = r.active ? 'nota-cell' : 'inactive-cell';
+                        const cls = r.active ? ('nota-cell ' + (r.nota < 5 ? 'nota-suspenso' : 'nota-aprobado')) : 'inactive-cell';
                         // Tooltip enriquecido: competencia + criterio
                         const tipText = buildCriterioTooltip(materiaKey, r);
                         html += `<td class="${pastel}">
@@ -4869,7 +4898,7 @@
                     if (i < items.length) {
                         const r = items[i];
                         const notaStr = r.active ? r.nota.toFixed(2) : 'No evaluado';
-                        const cls = r.active ? 'nota-cell' : 'inactive-cell';
+                        const cls = r.active ? ('nota-cell ' + (r.nota < 5 ? 'nota-suspenso' : 'nota-aprobado')) : 'inactive-cell';
                         const tipText = buildCriterioTooltip(materiaKey, r);
                         html += `<td class="${pastel}">
                                     <span class="criterio-code tooltip-trigger">
@@ -5282,6 +5311,12 @@
                 tecFormContainer.addEventListener('change', function(e) {
                     if (e.target && e.target.tagName === 'INPUT' && e.target.type === 'number') {
                         guardarNotasFormEnAlumno();
+                    }
+                });
+                // Actualizar colores en tiempo real mientras se escribe
+                tecFormContainer.addEventListener('input', function(e) {
+                    if (e.target && e.target.tagName === 'INPUT' && e.target.type === 'number') {
+                        actualizarColoresNotasForm();
                     }
                 });
             }
