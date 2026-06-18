@@ -1043,6 +1043,109 @@
             max-width: 100vw;
         }
 
+
+        /* ===== OPTIMIZACIONES DE RENDIMIENTO TÁCTIL ===== */
+        /* contain: aísla el renderizado de las celdas y tablas para que el
+           navegador no recalcule el layout global al cambiar una celda. */
+        .matrix-wrapper,
+        #tecFormContainer,
+        #resultadosCalculo,
+        .tec-table,
+        .result-table {
+            contain: content;
+        }
+
+        /* will-change en celdas hover: avisa al navegador para que prepare
+           la capa GPU y el transform sea instantáneo */
+        .celda-correlacion,
+        .celda-editable,
+        .clickable-header,
+        .tab-btn,
+        .btn {
+            will-change: transform;
+        }
+
+        /* En móvil: desactivar transiciones de hover que causan reflow
+           (no hay hover real en táctil, pero el navegador las procesa) */
+        @media (hover: none) and (pointer: coarse) {
+            .celda-correlation:hover,
+            .celda-correlacion:hover,
+            .celda-editable:hover,
+            .clickable-header:hover {
+                transform: none !important;
+                box-shadow: none !important;
+                filter: none !important;
+                transition: none !important;
+            }
+            /* Mantener feedback táctil con :active (instantáneo) */
+            .celda-correlacion:active,
+            .celda-editable:active,
+            .clickable-header:active,
+            .btn:active,
+            .tab-btn:active {
+                transform: scale(0.96);
+                transition: transform 0.05s ease-out;
+            }
+            /* Tooltip-trigger no necesita cursor help en móvil */
+            .tooltip-trigger { cursor: default !important; }
+            .competencia-header { text-decoration: none !important; }
+        }
+
+        /* touch-action: manipulation en botones → elimina delay 300ms click */
+        .btn,
+        .tab-btn,
+        .clickable-header,
+        .celda-editable,
+        .celda-correlacion,
+        .competencia-header {
+            touch-action: manipulation;
+        }
+
+        /* inputs numéricos: touch-action para mejor respuesta */
+        .tec-table input[type="number"] {
+            touch-action: manipulation;
+        }
+
+        /* Reducir el coste de las transiciones: solo transform y opacity
+           (propiedades GPU-aceleradas) */
+        .celda-correlacion,
+        .celda-editable,
+        .clickable-header,
+        .btn,
+        .tab-btn {
+            transition: transform 0.1s ease-out, opacity 0.1s ease-out, background-color 0.15s ease-out;
+        }
+
+        /* Mejorar el scrolling en contenedores con scroll horizontal:
+           content-visibility auto mejora el render de tablas largas */
+        @supports (content-visibility: auto) {
+            .matrix-wrapper table,
+            #tecFormContainer .tec-table,
+            #resultadosCalculo .result-table {
+                content-visibility: auto;
+                contain-intrinsic-size: auto 600px;
+            }
+        }
+
+        /* El sticky header no debe causar repaint costoso */
+        th {
+            will-change: auto;
+            backface-visibility: hidden;
+        }
+
+        /* body: optimizar el repaint global */
+        body {
+            text-rendering: optimizeSpeed;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* En móvil, desactivar animaciones de entrada de tab-content
+           (cuestan ~300ms de CPU al cambiar de pestaña) */
+        @media (hover: none) and (pointer: coarse) {
+            .tab-content {
+                animation: none !important;
+            }
+        }
 </style>
 </head>
 <body>
@@ -2123,24 +2226,39 @@
             if (!cont) return;
             const alumno = getAlumnoActual();
             const materias = (alumno && alumno.materias) || MATERIAS_EVALUABLES.slice();
-            cont.innerHTML = '';
+
+            // Optimización: si ya existen los checkboxes, solo actualizar
+            // el estado checked. Evita reconstruir todo el DOM.
+            const existing = cont.querySelectorAll('input[type="checkbox"]');
+            if (existing.length === MATERIAS_EVALUABLES.length) {
+                existing.forEach(chk => {
+                    chk.checked = materias.indexOf(chk.value) !== -1;
+                });
+                return;
+            }
+
+            // Reconstruir con DocumentFragment (1 solo reflow en lugar de N)
+            const frag = document.createDocumentFragment();
             MATERIAS_EVALUABLES.forEach(mk => {
                 const id = 'chkMat_' + mk;
                 const wrapper = document.createElement('label');
-                wrapper.style.cssText = 'display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border:1px solid #cbd5e1;border-radius:8px;cursor:pointer;background:white;font-size:0.85rem;font-weight:500;';
+                wrapper.style.cssText = 'display:inline-flex;align-items:center;gap:4px;padding:6px 12px;border:1px solid #cbd5e1;border-radius:8px;cursor:pointer;background:white;font-size:0.85rem;font-weight:500;touch-action:manipulation;';
                 const chk = document.createElement('input');
                 chk.type = 'checkbox';
                 chk.id = id;
                 chk.value = mk;
                 chk.checked = materias.indexOf(mk) !== -1;
+                chk.style.cssText = 'width:18px;height:18px;cursor:pointer;';
                 chk.addEventListener('change', function() {
                     toggleMateriaAlumnoActual(mk, this.checked);
                 });
                 wrapper.appendChild(chk);
                 const txt = document.createTextNode(' ' + mk + ' ');
                 wrapper.appendChild(txt);
-                cont.appendChild(wrapper);
+                frag.appendChild(wrapper);
             });
+            cont.innerHTML = '';
+            cont.appendChild(frag);
         }
 
         /**
@@ -5156,19 +5274,20 @@
                 tabCalculo: document.getElementById('tabCalculo')
             };
 
-            tabs.forEach(btn => {
-                btn.addEventListener('click', function() {
-                    tabs.forEach(b => b.classList.remove('active'));
-                    this.classList.add('active');
-                    Object.values(contents).forEach(c => c.classList.remove('active'));
-                    const target = this.dataset.tab;
-                    if (contents[target]) contents[target].classList.add('active');
-                    if (target === 'tabCalculo') {
-                        const materia = document.getElementById('materiaSelect').value;
-                        renderCalculo();
-                        document.getElementById('resultadosCalculo').style.display = 'none';
-                    }
-                });
+            // Delegación de eventos: 1 listener en el contenedor en lugar de 6
+            const tabContainer = tabs[0].parentElement;
+            tabContainer.addEventListener('click', function(e) {
+                const btn = e.target.closest('.tab-btn');
+                if (!btn) return;
+                tabs.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                Object.values(contents).forEach(c => c.classList.remove('active'));
+                const target = btn.dataset.tab;
+                if (contents[target]) contents[target].classList.add('active');
+                if (target === 'tabCalculo') {
+                    renderCalculo();
+                    document.getElementById('resultadosCalculo').style.display = 'none';
+                }
             });
         }
 
@@ -5450,24 +5569,59 @@
 
             function init() {
                 ensure();
-                // Delegación de eventos en todo el documento (funciona con contenido dinámico)
-                document.addEventListener('mouseover', function(e) {
-                    const trigger = e.target.closest('.tooltip-trigger');
-                    if (!trigger) return;
-                    if (trigger === currentTrigger) return;
-                    show(trigger);
-                });
-                document.addEventListener('mouseout', function(e) {
-                    const trigger = e.target.closest('.tooltip-trigger');
-                    if (!trigger) return;
-                    const related = e.relatedTarget;
-                    // Si seguimos dentro del mismo trigger, no ocultar
-                    if (related && trigger.contains(related)) return;
-                    hide();
-                });
-                // Ocultar al hacer scroll o redimensionar (la posición ya no sería válida)
-                window.addEventListener('scroll', hide, true);
-                window.addEventListener('resize', hide);
+                // En móvil (pointer: coarse) NO registrar mouseover/mouseout:
+                // son emulados por el navegador al tocar y generan trabajo inútil.
+                // En su lugar, los tooltips en móvil se muestran con touchstart.
+                const isTouch = window.matchMedia('(hover: none) and (pointer: coarse)').matches;
+                if (!isTouch) {
+                    // Delegación de eventos en todo el documento (escritorio)
+                    document.addEventListener('mouseover', function(e) {
+                        const trigger = e.target.closest('.tooltip-trigger');
+                        if (!trigger) return;
+                        if (trigger === currentTrigger) return;
+                        show(trigger);
+                    }, { passive: true });
+                    document.addEventListener('mouseout', function(e) {
+                        const trigger = e.target.closest('.tooltip-trigger');
+                        if (!trigger) return;
+                        const related = e.relatedTarget;
+                        if (related && trigger.contains(related)) return;
+                        hide();
+                    }, { passive: true });
+                } else {
+                    // Móvil: tooltip al tocar, con delay corto para no interferir
+                    // con el scroll. Usamos touchstart con passive:true.
+                    let touchTimer = null;
+                    document.addEventListener('touchstart', function(e) {
+                        const trigger = e.target.closest('.tooltip-trigger');
+                        if (!trigger) {
+                            if (currentTrigger) hide();
+                            return;
+                        }
+                        // Delay de 250ms para distinguir tap de scroll
+                        if (touchTimer) clearTimeout(touchTimer);
+                        touchTimer = setTimeout(function() {
+                            show(trigger);
+                        }, 250);
+                    }, { passive: true });
+                    document.addEventListener('touchmove', function() {
+                        if (touchTimer) { clearTimeout(touchTimer); touchTimer = null; }
+                        if (currentTrigger) hide();
+                    }, { passive: true });
+                }
+                // Ocultar al hacer scroll o redimensionar (con throttle rAF para
+                // no ejecutar hide en cada frame de scroll)
+                let scrollRafPending = false;
+                function onScroll() {
+                    if (scrollRafPending) return;
+                    scrollRafPending = true;
+                    requestAnimationFrame(function() {
+                        scrollRafPending = false;
+                        hide();
+                    });
+                }
+                window.addEventListener('scroll', onScroll, { passive: true, capture: true });
+                window.addEventListener('resize', hide, { passive: true });
                 // Soporte táctil: ocultar al tocar fuera
                 document.addEventListener('touchstart', function(e) {
                     if (!currentTrigger) return;
@@ -5730,15 +5884,34 @@
             const tecFormContainer = document.getElementById('tecFormContainer');
             if (tecFormContainer && !tecFormContainer.dataset.bound) {
                 tecFormContainer.dataset.bound = '1';
+                // Debounce del guardado en localStorage: en lugar de guardar en
+                // cada pulsación de tecla, esperar 400ms tras la última.
+                let saveNotasTimer = null;
+                function debouncedSaveNotas() {
+                    if (saveNotasTimer) clearTimeout(saveNotasTimer);
+                    saveNotasTimer = setTimeout(function() {
+                        guardarNotasFormEnAlumno();
+                        saveNotasTimer = null;
+                    }, 400);
+                }
                 tecFormContainer.addEventListener('change', function(e) {
                     if (e.target && e.target.tagName === 'INPUT' && e.target.type === 'number') {
-                        guardarNotasFormEnAlumno();
+                        debouncedSaveNotas();
                     }
                 });
                 // Actualizar colores en tiempo real mientras se escribe
+                // (operación barata, sin debounce)
                 tecFormContainer.addEventListener('input', function(e) {
                     if (e.target && e.target.tagName === 'INPUT' && e.target.type === 'number') {
                         actualizarColoresNotasForm();
+                    }
+                }, { passive: true });
+                // Guardar inmediatamente antes de cerrar la página por si
+                // queda un debounce pendiente
+                window.addEventListener('beforeunload', function() {
+                    if (saveNotasTimer) {
+                        clearTimeout(saveNotasTimer);
+                        guardarNotasFormEnAlumno();
                     }
                 });
             }
@@ -5813,27 +5986,36 @@
             tabs.classList.toggle('is-scrollable', needsScroll);
         }
 
-        // Aplicar al cargar y al redimensionar
+        // Aplicar al cargar y al redimensionar (con throttle rAF)
         applyScrollMode();
-        window.addEventListener('resize', applyScrollMode);
+        let resizeRafPending = false;
+        function applyScrollModeThrottled() {
+            if (resizeRafPending) return;
+            resizeRafPending = true;
+            requestAnimationFrame(function() {
+                resizeRafPending = false;
+                applyScrollMode();
+            });
+        }
+        window.addEventListener('resize', applyScrollModeThrottled, { passive: true });
         // También tras un pequeño delay por si las fuentes cargan tarde
         window.addEventListener('load', function() {
             setTimeout(applyScrollMode, 100);
             setTimeout(applyScrollMode, 500);
         });
 
-        // Scroll suave al hacer clic en una pestaña (para que sea visible)
+        // Scroll suave al hacer clic en una pestaña (con rAF en lugar de setTimeout)
         tabs.querySelectorAll('.tab-btn').forEach(function(btn) {
             btn.addEventListener('click', function() {
-                // Pequeño timeout para que el tab se active primero
-                setTimeout(function() {
+                // rAF: se ejecuta en el próximo frame, más eficiente que setTimeout
+                requestAnimationFrame(function() {
                     btn.scrollIntoView({
                         behavior: 'smooth',
                         block: 'nearest',
                         inline: 'center'
                     });
-                }, 50);
-            });
+                });
+            }, { passive: true });
         });
 
         // Re-aplicar cuando cambian las dimensiones (rotación, etc.)
@@ -5843,18 +6025,12 @@
     })();
 
     // ============================================================
-    // PREVENIR ZOOM EN iOS al hacer doble tap en botones
+    // PREVENIR ZOOM/DBL-TAP en iOS: ahora se hace con CSS
+    // (touch-action: manipulation en .btn, .tab-btn, .celda-correlacion...)
+    // Eliminado el listener touchend preventivo que bloqueaba el scroll.
     // ============================================================
-    (function() {
-        let lastTouchEnd = 0;
-        document.addEventListener('touchend', function(e) {
-            const now = Date.now();
-            if (now - lastTouchEnd <= 300) {
-                e.preventDefault();
-            }
-            lastTouchEnd = now;
-        }, { passive: false });
-    })();
+    // (Sin código JS: la solución CSS es más eficiente y no interfiere
+    //  con el scrolling natural.)
 
     // ============================================================
     // ASEGURAR que el viewport se ajusta correctamente al rotar
