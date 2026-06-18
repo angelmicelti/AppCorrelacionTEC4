@@ -28,9 +28,14 @@
  *         tabla con overflow-x:auto, inputs font-size:16px (sin zoom iOS),
  *         safe-area-inset para notch, modales full-screen en <480px, touch
  *         targets más grandes, breakpoints múltiples (1024/768/480/380px)
+ *   v18 — rendimiento táctil: eliminado listener touchend preventivo (bloqueaba
+ *         scroll 300ms), mouseover/mouseout desactivados en móvil, throttle rAF
+ *         de scroll/resize, debounce 400ms en guardado de notas, delegación
+ *         de eventos en pestañas, DocumentFragment en checkboxes, CSS will-change
+ *         + contain + content-visibility, transiciones hover desactivadas en móvil
  */
 
-const CACHE_VERSION = 'v17';
+const CACHE_VERSION = 'v18';
 const CACHE_NAME = 'matriz-tec4-' + CACHE_VERSION;
 const CDN_CACHE_NAME = 'matriz-tec4-cdn-' + CACHE_VERSION;
 const APP_SHELL = [
