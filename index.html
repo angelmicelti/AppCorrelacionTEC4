@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>Matriz de correlación TEC4 – TYD / CYR</title>
     <!-- ===== PWA META TAGS ===== -->
     <meta name="theme-color" content="#2563eb" />
@@ -594,49 +594,456 @@
             background: #94a3b8;
         }
 
+        /* ===== BREAKPOINTS MÚLTIPLES ===== */
+        @media (max-width: 1024px) {
+            .container {
+                max-width: 100%;
+                padding: 24px 22px 28px;
+            }
+        }
+
         @media (max-width: 768px) {
             body {
                 padding: 12px;
+                padding-left: max(12px, env(safe-area-inset-left));
+                padding-right: max(12px, env(safe-area-inset-right));
             }
             .container {
                 padding: 18px 16px 24px;
+                border-radius: 14px;
             }
             h1 {
-                font-size: 1.3rem;
+                font-size: 1.25rem;
+                line-height: 1.3;
             }
             h2 {
                 font-size: 1.05rem;
             }
+            h3 {
+                font-size: 1rem;
+            }
+            p {
+                font-size: 0.85rem;
+            }
+            /* Pestañas: scroll horizontal en móvil */
             .tabs {
                 gap: 6px;
+                overflow-x: auto;
+                flex-wrap: nowrap;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: thin;
+                padding-bottom: 8px;
+                margin-left: -2px;
+                margin-right: -2px;
+            }
+            .tabs .tab-btn {
+                flex-shrink: 0;
+                white-space: nowrap;
             }
             .tab-btn {
                 font-size: 0.78rem;
-                padding: 6px 14px;
+                padding: 8px 14px;
+                min-height: 36px;
             }
             .tooltip-text {
                 max-width: 220px;
                 font-size: 0.68rem;
             }
+            .global-tooltip {
+                max-width: 260px;
+                font-size: 0.74rem;
+            }
             .tec-table input[type="number"] {
-                width: 50px;
+                width: 52px;
+                padding: 8px 6px;
             }
             .tec-table th,
             .tec-table td {
-                padding: 6px 8px;
+                padding: 8px 6px;
             }
             .btn {
-                padding: 8px 16px;
+                padding: 10px 16px;
                 font-size: 0.82rem;
+                margin: 4px 2px;
             }
             .form-section {
-                padding: 16px;
+                padding: 14px;
             }
             .selector-materia {
                 padding: 12px;
             }
+            .results {
+                padding: 14px 12px;
+            }
+            /* Barra de usuario: wrap y mejor spacing */
+            #mainApp .container > div[style*="justify-content:flex-end"] {
+                flex-wrap: wrap;
+                gap: 6px;
+                justify-content: flex-start !important;
+            }
+            /* Botones de gestión de alumnos: ocupan ancho completo apilados */
+            #tabCalculo .form-section > div[style*="display:flex"][style*="flex-wrap:wrap"][style*="gap:10px"] button,
+            #tabCalculo .form-section > div[style*="display:flex"][style*="gap:8px"][style*="margin-top:12px"] button {
+                flex: 1 1 auto;
+                min-width: 140px;
+            }
+            #alumnoSelect {
+                width: 100%;
+                min-width: 0 !important;
+            }
+            /* Firebase status: status badge en su propia línea */
+            #firebaseStatus {
+                white-space: nowrap;
+            }
+            /* Reducir tamaño de códigos de criterio */
+            .criterio-code,
+            .tec-table .criterio-code {
+                font-size: 0.72rem;
+            }
+            /* th-corner más estrecho */
+            .th-corner {
+                min-width: 80px;
+            }
         }
-    </style>
+
+        @media (max-width: 480px) {
+            body {
+                padding: 8px;
+                padding-left: max(8px, env(safe-area-inset-left));
+                padding-right: max(8px, env(safe-area-inset-right));
+            }
+            .container {
+                padding: 14px 12px 18px;
+                border-radius: 12px;
+                box-shadow: 0 6px 16px rgba(15, 23, 42, 0.06);
+            }
+            h1 {
+                font-size: 1.1rem;
+            }
+            h2 {
+                font-size: 0.98rem;
+            }
+            h3 {
+                font-size: 0.92rem;
+            }
+            p {
+                font-size: 0.8rem;
+                line-height: 1.5;
+            }
+            .tab-btn {
+                font-size: 0.74rem;
+                padding: 7px 12px;
+                min-height: 38px;
+            }
+            .btn {
+                padding: 11px 14px;
+                font-size: 0.8rem;
+                width: 100%;
+                margin: 4px 0;
+                border-radius: 24px;
+            }
+            /* En grupos de botones, dos por fila */
+            #tabCalculo .form-section > div[style*="display:flex"][style*="flex-wrap:wrap"][style*="gap:10px"] button,
+            #tabCalculo .form-section > div[style*="display:flex"][style*="gap:8px"][style*="margin-top:12px"] button,
+            .selector-materia button,
+            #mainApp .container > div[style*="justify-content:flex-end"] button {
+                flex: 1 1 calc(50% - 4px);
+                min-width: 0;
+                width: auto;
+            }
+            /* Pero botones primarios sueltos sí a ancho completo */
+            #calculateBtn {
+                width: 100%;
+            }
+            .form-section {
+                padding: 12px 10px;
+                border-radius: 10px;
+            }
+            .selector-materia {
+                padding: 10px;
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .selector-materia label,
+            .selector-materia select {
+                width: 100%;
+            }
+            .results {
+                padding: 12px 10px;
+            }
+            .tec-table input[type="number"] {
+                width: 44px;
+                padding: 8px 4px;
+                font-size: 16px;
+            }
+            .tec-table th,
+            .tec-table td {
+                padding: 6px 4px;
+            }
+            .tec-table .competencia-label {
+                font-size: 0.82rem;
+            }
+            .tec-table th {
+                font-size: 0.78rem;
+            }
+            .celda-correlacion {
+                min-width: 38px;
+                font-size: 0.75rem;
+                padding: 6px 2px;
+            }
+            .celda-correlacion .peso {
+                font-size: 0.6rem;
+            }
+            .th-corner {
+                min-width: 70px;
+                font-size: 0.72rem;
+            }
+            .th-fila {
+                font-size: 0.72rem;
+                padding: 6px 8px 6px 10px;
+            }
+            /* Auth screen: padding más compacto */
+            #authScreen {
+                padding: 12px !important;
+            }
+            #authScreen > div {
+                padding: 22px 18px !important;
+                border-radius: 14px !important;
+            }
+            /* Modal gestión de usuarios: casi full-screen */
+            #userMgmtModal {
+                padding: 8px !important;
+            }
+            #userMgmtModal > div {
+                padding: 14px 12px !important;
+                max-width: 100% !important;
+                max-height: 92vh !important;
+                border-radius: 12px !important;
+            }
+            /* Resultados: nota media destacada */
+            #resultadosCalculo p strong {
+                font-size: 0.92rem;
+                display: block;
+                padding: 8px 10px;
+                background: #fef3c7;
+                border-radius: 8px;
+                margin-top: 8px;
+            }
+            /* Scrollbar más visible en móvil */
+            .matrix-wrapper::-webkit-scrollbar,
+            #tecFormContainer::-webkit-scrollbar,
+            #resultadosCalculo::-webkit-scrollbar {
+                height: 6px;
+            }
+            .matrix-wrapper::-webkit-scrollbar-thumb,
+            #tecFormContainer::-webkit-scrollbar-thumb,
+            #resultadosCalculo::-webkit-scrollbar-thumb {
+                background: #94a3b8;
+                border-radius: 4px;
+            }
+            /* Details/summary más legible */
+            details summary {
+                font-size: 0.78rem;
+                padding: 4px 0;
+            }
+            /* Inputs de auth más grandes */
+            #authForm input {
+                padding: 12px 14px !important;
+                font-size: 16px !important;
+            }
+        }
+
+        @media (max-width: 380px) {
+            .container {
+                padding: 12px 10px 16px;
+                border-radius: 10px;
+            }
+            h1 {
+                font-size: 1.02rem;
+            }
+            .tab-btn {
+                font-size: 0.7rem;
+                padding: 7px 10px;
+            }
+            .btn {
+                font-size: 0.76rem;
+                padding: 10px 12px;
+            }
+            .tec-table input[type="number"] {
+                width: 38px;
+                padding: 6px 2px;
+            }
+            .celda-correlacion {
+                min-width: 34px;
+                font-size: 0.7rem;
+            }
+        }
+
+        /* Modo paisaje en móvil: no tanta reducción */
+        @media (max-width: 900px) and (orientation: landscape) and (max-height: 500px) {
+            .container {
+                padding: 12px 16px;
+            }
+            h1 {
+                font-size: 1.1rem;
+                margin-bottom: 0.25rem;
+            }
+            .tabs {
+                margin: 10px 0 12px;
+            }
+        }
+    
+        /* ===== MEJORAS DE RESPONSIVIDAD (base) ===== */
+        /* Evitar zoom automático en iOS al enfocar inputs < 16px */
+        input[type="text"],
+        input[type="password"],
+        input[type="number"],
+        input[type="email"],
+        select,
+        textarea {
+            font-size: 16px;
+        }
+        @media (min-width: 769px) {
+            /* En escritorio volvemos a tamaños más pequeños */
+            input[type="number"] { font-size: 0.9rem; }
+            input[type="text"], input[type="password"], input[type="email"], select, textarea {
+                font-size: 0.95rem;
+            }
+        }
+
+        /* Safe-area para iPhones con notch / Dynamic Island */
+        body {
+            padding-left: env(safe-area-inset-left);
+            padding-right: env(safe-area-inset-right);
+        }
+
+        /* Momentum scrolling en contenedores con scroll */
+        .matrix-wrapper,
+        #tecFormContainer,
+        #resultadosCalculo,
+        .tabs-scroll {
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior: contain;
+        }
+
+        /* Hacer scrollables horizontalmente los contenedores de tablas
+           que NO estaban dentro de .matrix-wrapper */
+        #tecFormContainer {
+            overflow-x: auto;
+            margin: 8px -4px 0;
+            padding: 0 4px;
+        }
+        #tecFormContainer .tec-table {
+            min-width: 520px;
+        }
+        #resultadosCalculo {
+            overflow-x: auto;
+        }
+        #resultadosCalculo .result-table {
+            min-width: 520px;
+        }
+
+        /* Asegurar que las tablas dentro de matrix-wrapper también tengan min-width */
+        .matrix-wrapper table {
+            min-width: 600px;
+        }
+
+        /* Las pestañas se vuelven scroll horizontal en móvil (se activa por JS) */
+        .tabs.is-scrollable {
+            overflow-x: auto;
+            flex-wrap: nowrap;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: thin;
+            padding-bottom: 8px;
+            margin-left: -4px;
+            margin-right: -4px;
+            padding-left: 4px;
+            padding-right: 4px;
+        }
+        .tabs.is-scrollable .tab-btn {
+            flex-shrink: 0;
+            white-space: nowrap;
+        }
+        .tabs.is-scrollable::-webkit-scrollbar {
+            height: 4px;
+        }
+        .tabs.is-scrollable::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+
+        /* Botones más amigables al tacto */
+        .btn {
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+
+        /* Inputs más amigables al tacto */
+        .tec-table input[type="number"],
+        .selector-materia select,
+        #alumnoSelect {
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* El h1 con emoji no debe romper línea de forma fea */
+        h1 {
+            word-break: break-word;
+            overflow-wrap: break-word;
+        }
+
+        /* Flex containers deben poder envolver correctamente */
+        #tabCalculo .form-section > div[style*="display:flex"],
+        .selector-materia {
+            flex-wrap: wrap;
+        }
+
+        /* Modales: padding responsive */
+        @media (max-width: 480px) {
+            #authScreen > div {
+                padding: 24px 20px !important;
+                border-radius: 14px !important;
+            }
+            #userMgmtModal > div {
+                padding: 16px 14px !important;
+                border-radius: 12px !important;
+                max-width: 100% !important;
+                max-height: 90vh !important;
+            }
+        }
+
+        /* Reduce layout shift: containers no deben tener ancho fijo */
+        #alumnoSelect {
+            max-width: 100%;
+            box-sizing: border-box;
+        }
+
+        /* Mejorar contraste y legibilidad en pantallas pequeñas */
+        @media (max-width: 480px) {
+            .celda-correlacion {
+                min-width: 42px;
+                font-size: 0.78rem;
+            }
+            .celda-correlacion .peso {
+                font-size: 0.62rem;
+            }
+            .tec-table .criterio-code,
+            .result-table .criterio-code {
+                font-size: 0.72rem;
+            }
+        }
+
+        /* Las celdas de la matriz: touch target mínimo razonable */
+        .celda-correlacion {
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Evitar scroll horizontal del body completo */
+        html, body {
+            overflow-x: hidden;
+            max-width: 100vw;
+        }
+
+</style>
 </head>
 <body>
     <!-- ===== PANTALLA DE LOGIN / REGISTRO (primer uso) ===== -->
@@ -5388,6 +5795,83 @@
                     });
             });
         }
+    </script>
+
+    <script>
+    // ============================================================
+    // RESPONSIVIDAD: hacer las pestañas scrollables en móvil
+    // y mejorar la experiencia táctil
+    // ============================================================
+    (function() {
+        const tabs = document.getElementById('tabHeaders');
+        if (!tabs) return;
+
+        function applyScrollMode() {
+            // Si el contenedor de tabs es más estrecho que su contenido,
+            // añadir la clase is-scrollable para activar el scroll horizontal.
+            const needsScroll = tabs.scrollWidth > tabs.clientWidth + 4;
+            tabs.classList.toggle('is-scrollable', needsScroll);
+        }
+
+        // Aplicar al cargar y al redimensionar
+        applyScrollMode();
+        window.addEventListener('resize', applyScrollMode);
+        // También tras un pequeño delay por si las fuentes cargan tarde
+        window.addEventListener('load', function() {
+            setTimeout(applyScrollMode, 100);
+            setTimeout(applyScrollMode, 500);
+        });
+
+        // Scroll suave al hacer clic en una pestaña (para que sea visible)
+        tabs.querySelectorAll('.tab-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                // Pequeño timeout para que el tab se active primero
+                setTimeout(function() {
+                    btn.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'nearest',
+                        inline: 'center'
+                    });
+                }, 50);
+            });
+        });
+
+        // Re-aplicar cuando cambian las dimensiones (rotación, etc.)
+        window.addEventListener('orientationchange', function() {
+            setTimeout(applyScrollMode, 200);
+        });
+    })();
+
+    // ============================================================
+    // PREVENIR ZOOM EN iOS al hacer doble tap en botones
+    // ============================================================
+    (function() {
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', function(e) {
+            const now = Date.now();
+            if (now - lastTouchEnd <= 300) {
+                e.preventDefault();
+            }
+            lastTouchEnd = now;
+        }, { passive: false });
+    })();
+
+    // ============================================================
+    // ASEGURAR que el viewport se ajusta correctamente al rotar
+    // ============================================================
+    (function() {
+        function adjustViewport() {
+            const viewport = document.querySelector('meta[name="viewport"]');
+            if (!viewport) return;
+            // Forzar recálculo del viewport en iOS
+            if (document.activeElement && document.activeElement.blur) {
+                // No quitar el foco si el usuario está escribiendo
+            }
+        }
+        window.addEventListener('orientationchange', function() {
+            setTimeout(adjustViewport, 300);
+        });
+    })();
     </script>
 </body>
 </html>
