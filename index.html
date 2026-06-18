@@ -130,6 +130,11 @@
             width: 100%;
             font-size: 0.82rem;
             min-width: 600px;
+            /* Forzar touch-action en la tabla: necesario porque algunos
+               navegadores móviles no heredan correctamente el touch-action
+               del contenedor padre. */
+            touch-action: pan-x pan-y;
+            overscroll-behavior: contain;
         }
         th,
         td {
@@ -138,14 +143,23 @@
             text-align: center;
             vertical-align: middle;
             position: relative;
+            touch-action: pan-x pan-y;
+        }
+        thead {
+            touch-action: pan-x pan-y;
+        }
+        tbody {
+            touch-action: pan-x pan-y;
         }
         th {
             background: #f8fafc;
             font-weight: 600;
             color: #0f172a;
-            position: sticky;
-            top: 0;
-            z-index: 5;
+            /* position: sticky eliminado: en iOS Safari y Chrome móvil, los
+               elementos sticky dentro de contenedores scrollables pueden
+               bloquear el inicio del scroll táctil cuando el dedo está sobre
+               ellos. Las tablas no son lo suficientemente altas como para
+               necesitar headers pegajosos. */
             font-size: 0.78rem;
             letter-spacing: 0.01em;
         }
@@ -924,17 +938,21 @@
         }
 
         /* Momentum scrolling en contenedores con scroll.
+           -webkit-overflow-scrolling: touch con !important: en iOS Safari
+           es ESENCIAL para que el scroll tenga momentum (inercia). Sin
+           !important, algunas versiones no lo aplican.
            touch-action: pan-x → permite scroll horizontal inmediato
-           cuando el dedo empieza sobre una celda de la tabla. Sin esto,
-           algunos navegadores móviles retrasan o bloquean el scroll
-           porque las celdas tienen listeners click. */
+           cuando el dedo empieza sobre una celda de la tabla. */
         .matrix-wrapper,
         #tecFormContainer,
         #resultadosCalculo,
         .tabs-scroll {
-            -webkit-overflow-scrolling: touch;
+            -webkit-overflow-scrolling: touch !important;
             overscroll-behavior: contain;
             touch-action: pan-x;
+            /* Asegurar que el contenedor SÍ puede recibir toques
+               (no los descarta). */
+            pointer-events: auto;
         }
         /* El body también puede recibir scroll vertical: pan-y */
         body {
@@ -1158,10 +1176,11 @@
             }
         }
 
-        /* El sticky header no debe causar repaint costoso */
+        /* th ya no es sticky: no necesita will-change ni backface-visibility.
+           Estas propiedades en elementos dentro de contenedores scrollables
+           pueden causar problemas de scroll táctil en iOS. */
         th {
-            will-change: auto;
-            backface-visibility: hidden;
+            backface-visibility: visible;
         }
 
         /* body: optimizar el repaint global */
