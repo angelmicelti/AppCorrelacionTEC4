@@ -38,9 +38,14 @@
  *         del scroll al poner el dedo sobre una celda con listener click).
  *         will-change quitado de celdas para evitar capas GPU que capturan
  *         el gesto táctil.
+ *   v20 — fix DEFINITIVO scroll táctil: eliminado position:sticky de th
+ *         (causa principal del bloqueo en iOS Safari cuando el dedo está
+ *         sobre un header), touch-action: pan-x pan-y forzado en table/thead/
+ *         th/tbody, -webkit-overflow-scrolling: touch con !important, quitado
+ *         will-change:auto y backface-visibility:hidden de th.
  */
 
-const CACHE_VERSION = 'v19';
+const CACHE_VERSION = 'v20';
 const CACHE_NAME = 'matriz-tec4-' + CACHE_VERSION;
 const CDN_CACHE_NAME = 'matriz-tec4-cdn-' + CACHE_VERSION;
 const APP_SHELL = [
