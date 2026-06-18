@@ -88,6 +88,12 @@
             transition: all 0.2s ease;
             color: #475569;
         }
+        /* Pestañas dentro de contenedor scrollable: heredan pan-x
+           para que el scroll del contenedor funcione al poner el dedo
+           sobre una pestaña. */
+        .tabs.is-scrollable .tab-btn {
+            touch-action: pan-x;
+        }
         .tab-btn:hover {
             background: #e2e8f0;
             color: #1e293b;
@@ -917,13 +923,22 @@
             padding-right: env(safe-area-inset-right);
         }
 
-        /* Momentum scrolling en contenedores con scroll */
+        /* Momentum scrolling en contenedores con scroll.
+           touch-action: pan-x → permite scroll horizontal inmediato
+           cuando el dedo empieza sobre una celda de la tabla. Sin esto,
+           algunos navegadores móviles retrasan o bloquean el scroll
+           porque las celdas tienen listeners click. */
         .matrix-wrapper,
         #tecFormContainer,
         #resultadosCalculo,
         .tabs-scroll {
             -webkit-overflow-scrolling: touch;
             overscroll-behavior: contain;
+            touch-action: pan-x;
+        }
+        /* El body también puede recibir scroll vertical: pan-y */
+        body {
+            touch-action: pan-y;
         }
 
         /* Hacer scrollables horizontalmente los contenedores de tablas
@@ -953,6 +968,7 @@
             overflow-x: auto;
             flex-wrap: nowrap;
             -webkit-overflow-scrolling: touch;
+            touch-action: pan-x;
             scrollbar-width: thin;
             padding-bottom: 8px;
             margin-left: -4px;
@@ -1055,11 +1071,9 @@
             contain: content;
         }
 
-        /* will-change en celdas hover: avisa al navegador para que prepare
-           la capa GPU y el transform sea instantáneo */
-        .celda-correlacion,
-        .celda-editable,
-        .clickable-header,
+        /* will-change en botones y pestañas: prepara capa GPU para taps.
+           NO en celdas de tabla (dentro de scrollables) porque las capas
+           GPU pueden capturar el gesto táctil e impedir el scroll. */
         .tab-btn,
         .btn {
             will-change: transform;
@@ -1091,19 +1105,36 @@
             .competencia-header { text-decoration: none !important; }
         }
 
-        /* touch-action: manipulation en botones → elimina delay 300ms click */
+        /* Botones y pestañas (NO están en contenedores scrollables):
+           manipulation elimina el delay de 300ms en click. */
         .btn,
-        .tab-btn,
+        .tab-btn {
+            touch-action: manipulation;
+        }
+        /* Celdas y headers de tabla (DENTRO de contenedores scrollables):
+           pan-x pan-y permite scroll horizontal y vertical inmediato.
+           manipulation aquí rompe el scroll en algunos móviles. */
         .clickable-header,
         .celda-editable,
         .celda-correlacion,
-        .competencia-header {
-            touch-action: manipulation;
+        .competencia-header,
+        .th-corner,
+        .th-fila,
+        .competencia-label,
+        .criterio-code,
+        .tec-table th,
+        .tec-table td,
+        .result-table th,
+        .result-table td,
+        .tooltip-trigger {
+            touch-action: pan-x pan-y;
         }
 
-        /* inputs numéricos: touch-action para mejor respuesta */
+        /* inputs numéricos: pan-x pan-y permite scroll de la tabla
+           incluso cuando el dedo está sobre el input. El tap sigue
+           funcionando para enfocar el campo. */
         .tec-table input[type="number"] {
-            touch-action: manipulation;
+            touch-action: pan-x pan-y;
         }
 
         /* Reducir el coste de las transiciones: solo transform y opacity
