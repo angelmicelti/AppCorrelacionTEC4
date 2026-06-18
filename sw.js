@@ -43,9 +43,21 @@
  *         sobre un header), touch-action: pan-x pan-y forzado en table/thead/
  *         th/tbody, -webkit-overflow-scrolling: touch con !important, quitado
  *         will-change:auto y backface-visibility:hidden de th.
+ *   v21 — fix Chrome Android: .tooltip-trigger display:contents (era
+ *         inline-block, marcado como interactivo por Chrome Android y
+ *         bloqueaba scroll), contain:content eliminado de matrix-wrapper
+ *         (bug conocido Chrome Android), content-visibility:auto limitado
+ *         a escritorio, cursor:default forzado en elementos de tabla en
+ *         móvil, touch-action:pan-x pan-y !important en todos los hijos
+ *         de matrix-wrapper en móvil.
+ *   v22 — FIX CRÍTICO: .matrix-wrapper tenía touch-action:pan-x (solo
+ *         horizontal) → BLOQUEABA el scroll VERTICAL de la página cuando
+ *         el dedo empezaba sobre una celda. Cambiado a pan-x pan-y en
+ *         TODOS los contenedores scrollables. Eliminado overscroll-behavior:
+ *         contain para que el scroll vertical se propague al body.
  */
 
-const CACHE_VERSION = 'v20';
+const CACHE_VERSION = 'v22';
 const CACHE_NAME = 'matriz-tec4-' + CACHE_VERSION;
 const CDN_CACHE_NAME = 'matriz-tec4-cdn-' + CACHE_VERSION;
 const APP_SHELL = [
