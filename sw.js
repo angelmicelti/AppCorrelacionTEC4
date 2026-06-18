@@ -33,9 +33,14 @@
  *         de scroll/resize, debounce 400ms en guardado de notas, delegación
  *         de eventos en pestañas, DocumentFragment en checkboxes, CSS will-change
  *         + contain + content-visibility, transiciones hover desactivadas en móvil
+ *   v19 — fix scroll táctil en tablas: touch-action: pan-x en contenedores
+ *         scrollables y pan-x pan-y en celdas (manipulation rompía el inicio
+ *         del scroll al poner el dedo sobre una celda con listener click).
+ *         will-change quitado de celdas para evitar capas GPU que capturan
+ *         el gesto táctil.
  */
 
-const CACHE_VERSION = 'v18';
+const CACHE_VERSION = 'v19';
 const CACHE_NAME = 'matriz-tec4-' + CACHE_VERSION;
 const CDN_CACHE_NAME = 'matriz-tec4-cdn-' + CACHE_VERSION;
 const APP_SHELL = [
