@@ -24,9 +24,13 @@
  *   v14 — botones de exportación por materia (JSON y Excel) en cada bloque de resultados
  *   v15 — notas en color: rojo < 5, verde >= 5 (formulario y resultados)
  *   v16 — fix: tildes en nombres de archivos de exportación
+ *   v17 — mejoras de responsividad móvil: pestañas scrollables, contenedores de
+ *         tabla con overflow-x:auto, inputs font-size:16px (sin zoom iOS),
+ *         safe-area-inset para notch, modales full-screen en <480px, touch
+ *         targets más grandes, breakpoints múltiples (1024/768/480/380px)
  */
 
-const CACHE_VERSION = 'v16';
+const CACHE_VERSION = 'v17';
 const CACHE_NAME = 'matriz-tec4-' + CACHE_VERSION;
 const CDN_CACHE_NAME = 'matriz-tec4-cdn-' + CACHE_VERSION;
 const APP_SHELL = [
