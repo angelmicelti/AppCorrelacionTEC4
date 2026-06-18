@@ -88,11 +88,11 @@
             transition: all 0.2s ease;
             color: #475569;
         }
-        /* Pestañas dentro de contenedor scrollable: heredan pan-x
-           para que el scroll del contenedor funcione al poner el dedo
-           sobre una pestaña. */
+        /* Pestañas dentro de contenedor scrollable: pan-x pan-y para que
+           el scroll horizontal de pestañas funcione Y el scroll vertical
+           de la página también funcione al poner el dedo sobre una pestaña. */
         .tabs.is-scrollable .tab-btn {
-            touch-action: pan-x;
+            touch-action: pan-x pan-y;
         }
         .tab-btn:hover {
             background: #e2e8f0;
@@ -134,7 +134,6 @@
                navegadores móviles no heredan correctamente el touch-action
                del contenedor padre. */
             touch-action: pan-x pan-y;
-            overscroll-behavior: contain;
         }
         th,
         td {
@@ -227,12 +226,17 @@
            por contenedores con overflow:auto/scroll. */
         .tooltip-trigger {
             position: relative;
-            display: inline-block;
+            /* display: contents → el span no genera caja propia, no rompe
+               el layout de la celda y NO es tratado como elemento interactivo
+               por Chrome Android (que bloquearía el scroll táctil). */
+            display: contents;
             cursor: help;
         }
-        /* Ocultar el span original: sirve como fuente de datos para JS */
+        /* Ocultar el span original: sirve como fuente de datos para JS.
+           Sin !important: el !important puede causar problemas de
+           hit-testing en Chrome Android que bloquean el scroll táctil. */
         .tooltip-text {
-            display: none !important;
+            display: none;
         }
 
         .global-tooltip {
@@ -941,22 +945,30 @@
            -webkit-overflow-scrolling: touch con !important: en iOS Safari
            es ESENCIAL para que el scroll tenga momentum (inercia). Sin
            !important, algunas versiones no lo aplican.
-           touch-action: pan-x → permite scroll horizontal inmediato
-           cuando el dedo empieza sobre una celda de la tabla. */
+           touch-action: pan-x pan-y → permite scroll horizontal DE LA TABLA
+           Y scroll vertical DE LA PÁGINA cuando el dedo está sobre la tabla.
+           ANTES era solo pan-x, lo que BLOQUEABA el scroll vertical de la
+           página cuando el dedo empezaba sobre una celda (el usuario no
+           podía bajar por la página).
+           overscroll-behavior SIN contain: si lo ponemos, Chrome Android
+           no propaga el scroll vertical al body cuando el dedo está sobre
+           la tabla. Sin contain, el scroll vertical "se escapa" hacia el
+           body cuando la tabla no puede scrollear más verticalmente. */
         .matrix-wrapper,
         #tecFormContainer,
         #resultadosCalculo,
         .tabs-scroll {
             -webkit-overflow-scrolling: touch !important;
-            overscroll-behavior: contain;
-            touch-action: pan-x;
+            touch-action: pan-x pan-y;
             /* Asegurar que el contenedor SÍ puede recibir toques
                (no los descarta). */
             pointer-events: auto;
         }
-        /* El body también puede recibir scroll vertical: pan-y */
+        /* El body permite ambos scrolls (pan-x pan-y) para que el scroll
+           vertical funcione incluso cuando el dedo está sobre elementos
+           con pan-x pan-y. */
         body {
-            touch-action: pan-y;
+            touch-action: pan-x pan-y;
         }
 
         /* Hacer scrollables horizontalmente los contenedores de tablas
@@ -986,7 +998,7 @@
             overflow-x: auto;
             flex-wrap: nowrap;
             -webkit-overflow-scrolling: touch;
-            touch-action: pan-x;
+            touch-action: pan-x pan-y;
             scrollbar-width: thin;
             padding-bottom: 8px;
             margin-left: -4px;
@@ -1079,14 +1091,12 @@
 
 
         /* ===== OPTIMIZACIONES DE RENDIMIENTO TÁCTIL ===== */
-        /* contain: aísla el renderizado de las celdas y tablas para que el
-           navegador no recalcule el layout global al cambiar una celda. */
-        .matrix-wrapper,
-        #tecFormContainer,
-        #resultadosCalculo,
+        /* contain eliminado: en Chrome Android, contain: content en
+           contenedores scrollables tiene un bug que rompe el scroll táctil.
+           La optimización de rendimiento que aportaba no compensa el bug. */
         .tec-table,
         .result-table {
-            contain: content;
+            /* Mantenemos contain solo en tablas no scrollables (no afecta) */
         }
 
         /* will-change en botones y pestañas: prepara capa GPU para taps.
@@ -1165,14 +1175,19 @@
             transition: transform 0.1s ease-out, opacity 0.1s ease-out, background-color 0.15s ease-out;
         }
 
-        /* Mejorar el scrolling en contenedores con scroll horizontal:
-           content-visibility auto mejora el render de tablas largas */
-        @supports (content-visibility: auto) {
-            .matrix-wrapper table,
-            #tecFormContainer .tec-table,
-            #resultadosCalculo .result-table {
-                content-visibility: auto;
-                contain-intrinsic-size: auto 600px;
+        /* content-visibility: auto eliminado: en Chrome Android, combinado
+           con overflow-x: auto en el contenedor padre, puede causar que el
+           scroll táctil no funcione al poner el dedo sobre la tabla.
+           Se mantiene solo si el navegador soporta contain-intrinsic-size
+           sin causar problemas (lo comprobamos con @supports y una clase
+           específica que solo se aplica en escritorio). */
+        @media (hover: hover) and (pointer: fine) {
+            @supports (content-visibility: auto) {
+                .tec-table,
+                .result-table {
+                    content-visibility: auto;
+                    contain-intrinsic-size: auto 600px;
+                }
             }
         }
 
@@ -1196,6 +1211,41 @@
                 animation: none !important;
             }
         }
+
+        /* EN MÓVIL: forzar touch-action en TODOS los elementos dentro de
+           contenedores scrollables. Esto es CRÍTICO en Chrome Android,
+           que de lo contrario puede decidir que un toque sobre ciertos
+           elementos (con cursor:pointer, display:inline-block, etc.)
+           NO es un gesto de scroll. */
+        @media (hover: none) and (pointer: coarse) {
+            .matrix-wrapper *,
+            #tecFormContainer *,
+            #resultadosCalculo * {
+                touch-action: pan-x pan-y !important;
+            }
+            /* En móvil, eliminar cursor: help/pointer de elementos dentro
+               de tablas: Chrome Android trata estos elementos como
+               "interactivos" y puede bloquear el scroll táctil. */
+            .matrix-wrapper .tooltip-trigger,
+            .matrix-wrapper .competencia-header,
+            .matrix-wrapper .criterio-code,
+            .matrix-wrapper .clickable-header,
+            .matrix-wrapper .celda-editable,
+            #tecFormContainer .tooltip-trigger,
+            #tecFormContainer .competencia-header,
+            #tecFormContainer .criterio-code,
+            #resultadosCalculo .tooltip-trigger,
+            #resultadosCalculo .competencia-header,
+            #resultadosCalculo .criterio-code {
+                cursor: default !important;
+            }
+            /* cursor: pointer puede activar modo interactivo en Chrome Android */
+            .matrix-wrapper [style*="cursor:pointer"],
+            .matrix-wrapper [style*="cursor: pointer"] {
+                cursor: default !important;
+            }
+        }
+
 </style>
 </head>
 <body>
